@@ -15,6 +15,69 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 2 — Timeline pipeline — 2026-11-15
+
+Merged in [#4](https://github.com/Moya-Art/ZenithSquad-spherex/pull/4). Squash-merged onto `main`.
+
+### Added
+
+- `pipeline/catalog.py` — the data layer. One SIA request per target per collection at a fixed
+  radius, 4 retries with 10→80 s backoff, VOTable parsing, MJD→date, 30-day epoch grouping, and a
+  per-band summary. Standard library only: no astroquery, no FITS.
+- `pipeline/cli.py` — `python -m pipeline.cli timeline --all` prints frames / obs / dates / span /
+  radius / epochs / longest gap, then per-epoch detail; `--json` gives the shape Phase 3 and Phase 5
+  extend. `--radius` and `--epoch-gap-days` are exposed on purpose.
+- `scripts/verify_counts.py` — measures BUILD_PLAN §1 and diffs it against the committed baseline
+  (counts, per-band numbers, radius), printing `PASS` / `DRIFT` / `UNKNOWN` and exiting 0 / 1 / 2.
+  `--update` accepts today's measurement as the new baseline.
+- `data/baseline/counts.json` — all ten target-collection rows with per-band counts and the radius
+  that answered.
+- `tests/` — 22 tests, none of which touch the network.
+
+### Decisions
+
+- **An epoch is a 30-day window.** Dates within 30 days of the previous date share an epoch; the
+  blink still steps through individual dates. One constant, one flag, and the gap list is printed on
+  every run so the choice stays visible.
+- **Zero rows is a result.** WISE 0855 has 0 frames in `spherex_qr3` and that is a correct answer.
+  Only an archive that never answers is an error (`UNKNOWN`, exit 2).
+- **A committed baseline, not an eyeball comparison.** Drift is expected (the archive ingests
+  weekly), so it is printed per field — `frames 261/258 (+3)` — rather than silently absorbed.
+
+### Findings that changed the plan
+
+- **IRSA's CSV output is not valid CSV.** `s_region` is written as `POLYGON ICRS r d,r d,…` with
+  unquoted commas, so the 51-column header meets 53 values on every data row and every field after
+  `s_region` shifts left. Parsing moved to VOTable (`xml.etree`), and a test pins a cell containing
+  exactly that polygon. BUILD_PLAN §1.3 and §2 now record the defect.
+- **The planned radius fallback changed the answer.** 0.001° → 0.01° on failure was measured to give
+  R Draconis 413 frames against 422, and Epsilon Indi QR3 116 against 117. A count that depends on
+  which retry succeeded is not a measurement, so the radius is now fixed, recorded in the baseline,
+  and a 502 surfaces as `UNKNOWN`.
+- **Counts drift within a day.** WISE 0855 was 258 frames when BUILD_PLAN §1 was measured and 261
+  that evening. The plan's table now comes from this tool, not from a hand count.
+- **Epsilon Indi QR3 at 0.001° answers intermittently** (502 in the morning, 116 rows in the evening,
+  502 again an hour later) while 0.01° answered throughout.
+
+### Verification
+
+- `pytest tests/ -q` → 22 passed, no network.
+- `python3 scripts/verify_counts.py` → 10 PASS against the baseline it wrote. Later passes reported
+  `UNKNOWN` for whichever rows IRSA dropped, with exit 2 and a named cause — never a zero.
+- `python -m pipeline.cli timeline --all` → R Draconis: 3 epochs, longest gap 99 d. WISE 0855:
+  3 epochs, longest gap 178 d. Epsilon Indi QR3: 1 epoch, no gap over 7 d.
+
+### Notes for the next phase
+
+- Phase 3 should reuse `catalog.search_epochs` for band selection, and leave `data/fallback/preview/`
+  where it is: the `data/fallback/{target}/` layout is Phase 3's migration, not Phase 2's.
+- The CLI builds its whole table before printing, so a killed run shows nothing. Printing per row as
+  it arrives is a five-line fix whenever someone is next in that file.
+- Do not add a cache in `catalog.py`: `verify_counts.py` must ask the live archive, and a cached row
+  list would hide the drift it exists to detect. Phase 5 owns caching.
+
+---
+
 ## Phase 1 — Target previews — 2026-11-15
 
 Merged in [#2](https://github.com/Moya-Art/ZenithSquad-spherex/pull/2). Commit `c023ac7`.
