@@ -173,11 +173,11 @@ def test_an_obs_id_outside_the_sequence_is_404(client, monkeypatch):
     assert response.status_code == 404
 
 
-def test_the_cube_route_is_registered_and_says_why_not_yet(client):
-    response = client.get("/cube", params={"ra": 1, "dec": 2, "size": 0.3})
-
-    assert response.status_code == 501
-    assert "Phase 6" in response.json()["detail"]
+def test_the_cube_route_asks_for_a_position(client):
+    """A cube needs a target slug or both coordinates. Half a coordinate never reaches the pipeline,
+    which is why this asserts 422 rather than starting a 306 MiB download inside a test."""
+    assert client.get("/cube").status_code == 422
+    assert client.get("/cube", params={"ra": 10}).status_code == 422
 
 
 def test_healthz_names_the_archive_and_the_cache(client):
@@ -212,6 +212,8 @@ def test_bad_parameters_are_422(client, params):
 def test_no_route_ever_answers_with_fits(client, monkeypatch):
     monkeypatch.setattr(service, "live_sequence", lambda *args, **kwargs: (dict(MANIFEST), "hit"))
     monkeypatch.setattr(service, "preview_webp", lambda *args, **kwargs: (WEBP, "hit"))
+    # Patched, not merely called: an unpatched /cube here would start a real build in the suite.
+    monkeypatch.setattr(service, "cube_state", lambda *args, **kwargs: (dict(MANIFEST), "hit"))
 
     responses = [
         client.get("/targets"),
