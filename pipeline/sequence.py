@@ -32,8 +32,9 @@ from pipeline.flags import (
     flag_bits,
     resolve_bits,
 )
+from pipeline.flags import bad_fraction as frame_bad_fraction
 from pipeline.fits_io import load_cutout
-from pipeline.measure import measure_frame, sky_offset
+from pipeline.measure import TargetOutsideFrame, measure_frame, sky_offset
 from pipeline.render import global_stretch, save_webp, to_uint8
 
 DEFAULT_SIZE_DEG = 0.3
@@ -79,6 +80,22 @@ class SequenceRequest:
     workers: int = DEFAULT_WORKERS
     refresh: bool = False
     targets_path: str = "data/targets.json"
+
+
+@dataclass(frozen=True)
+class PositionSpec:
+    """A point on the sky to build a sequence for, named target or raw coordinate.
+
+    Proper motion is optional because a coordinate typed into the URL has none: the cutout is then
+    centred on the position as given, which is the only honest thing to do, and the manifest says so.
+    """
+
+    ra: float
+    dec: float
+    label: str
+    name: str
+    pm_ra_cosdec: float | None = None
+    pm_dec: float | None = None
 
 
 def pick_band(bands: dict[str, dict[str, int]]) -> str:
@@ -206,35 +223,80 @@ def outlier_stats(stack: np.ndarray, frame: np.ndarray) -> dict:
 
 
 def build_sequence(request: SequenceRequest, progress=None) -> dict:
+    """Build one named target's sequence, resolving its position from `targets.json`."""
     targets = catalog.load_targets(request.targets_path)
     target = next((item for item in targets if item["slug"] == request.slug), None)
     if target is None:
         raise KeyError(f"unknown target slug {request.slug!r}")
 
-    rows = catalog.fetch_rows(target["ra"], target["dec"], request.collection)
+    position = PositionSpec(
+        ra=target["ra"],
+        dec=target["dec"],
+        label=target["slug"],
+        name=target.get("name", target["slug"]),
+        pm_ra_cosdec=target.get("pm_ra_cosdec"),
+        pm_dec=target.get("pm_dec"),
+    )
+    return build_from_position(
+        position,
+        collection=request.collection,
+        band=request.band,
+        size_deg=request.size_deg,
+        out_root=request.out_root,
+        cache_dir=request.cache_dir,
+        workers=request.workers,
+        refresh=request.refresh,
+        progress=progress,
+    )
+
+
+def build_from_position(
+    position: PositionSpec,
+    *,
+    collection: str = "spherex_dr1",
+    band: str | None = None,
+    size_deg: float = DEFAULT_SIZE_DEG,
+    out_root: Path = Path("data/fallback"),
+    cache_dir: Path = Path("data/cache"),
+    workers: int = DEFAULT_WORKERS,
+    refresh: bool = False,
+    write_manifest: bool = True,
+    progress=None,
+) -> dict:
+    """Build the time sequence for any position: named target or a coordinate typed by a visitor.
+
+    `write_manifest=False` lets a caller hold the manifest without a second read (the API caches it
+    under its own key); the WebPs are always written under `out_root` because that is what the
+    manifest's `file` fields point at.
+    """
+    rows = catalog.fetch_rows(position.ra, position.dec, collection)
     summary = catalog.summarise(catalog.frames_from_rows(rows))
-    band = request.band or pick_band(summary.bands)
+    band = band or pick_band(summary.bands)
     if band not in summary.bands:
-        raise ValueError(f"{request.slug} has no frames in {band}")
+        raise ValueError(f"{position.label} has no frames in {band}")
 
     refs = one_frame_per_date(frame_refs(rows, band))
     # Layout follows web/src/data.ts, which Phase 4 already shipped: one JSON per target+band in a
     # flat directory, frame files prefixed so five targets cannot collide. BUILD_PLAN §5 says
     # data/fallback/{target}/; that is now a plan change, not a code detail.
-    out_dir = Path(request.out_root) / "sequence"
-    stem = f"{request.slug}_{band}"
+    out_dir = Path(out_root) / "sequence"
+    stem = f"{position.label}_{band}"
 
     def fetch(ref: FrameRef) -> tuple[FrameRef, Path, SkyCoord]:
         year = Time(ref.mjd, format="mjd").decimalyear
         ra, dec = catalog.propagate(
-            target["ra"], target["dec"], target.get("pm_ra_cosdec"), target.get("pm_dec"), year
+            position.ra,
+            position.dec,
+            position.pm_ra_cosdec,
+            position.pm_dec,
+            year,
         )
-        url = cutout_url(ref, ra, dec, request.size_deg)
-        name = f"{ref.obs_id}_{band}_{request.size_deg}_{ra:.4f}_{dec:.4f}.fits"
-        path = download(url, Path(request.cache_dir) / name, refresh=request.refresh)
+        url = cutout_url(ref, ra, dec, size_deg)
+        name = f"{ref.obs_id}_{band}_{size_deg}_{ra:.4f}_{dec:.4f}.fits"
+        path = download(url, Path(cache_dir) / name, refresh=refresh)
         return ref, path, SkyCoord(ra, dec, unit="deg")
 
-    with ThreadPoolExecutor(max_workers=request.workers) as pool:
+    with ThreadPoolExecutor(max_workers=workers) as pool:
         downloads = list(pool.map(fetch, refs))
 
     cutouts = []
@@ -251,8 +313,18 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
         raise ValueError("the FLAGS header defines none of the expected flag names")
 
     measurements = []
+    measure_skipped: dict[str, str] = {}
     for ref, cutout in cutouts:
-        measurement = measure_frame(cutout, cutout.target_xy, bad_bits, saturation_bits)
+        try:
+            measurement = measure_frame(cutout, cutout.target_xy, bad_bits, saturation_bits)
+        except TargetOutsideFrame as error:
+            # A frame with no measurement is a fact about that frame, not a reason to lose the
+            # sequence: the blink still has the image, and the manifest records why it is unmeasured.
+            measure_skipped[ref.obs_id] = str(error)
+            measurements.append((ref, cutout, None))
+            if progress:
+                progress(f"{ref.date} not measured: {error}")
+            continue
         measurements.append((ref, cutout, measurement))
         if progress:
             progress(
@@ -308,25 +380,39 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
 
     # Positions are compared on the sky, never through pixel indices: cutouts sit on different grids,
     # so the target can be at x=50 in one frame and x=87 in another and still be the same star.
-    first_sky = measurements[0][1].wcs.pixel_to_world(
-        measurements[0][2].x, measurements[0][2].y
-    )
-    offsets_ra, offsets_dec, years = [], [], []
-    for ref, cutout, measurement in measurements:
-        measured_sky = cutout.wcs.pixel_to_world(measurement.x, measurement.y)
-        delta_ra, delta_dec = first_sky.spherical_offsets_to(measured_sky)
-        offsets_ra.append(delta_ra.to_value("arcsec"))
-        offsets_dec.append(delta_dec.to_value("arcsec"))
-        years.append(Time(ref.mjd, format="mjd").decimalyear)
+    # Frames whose target fell off a clipped cutout carry no measurement and take no part in this.
+    usable = [item for item in measurements if item[2] is not None]
+    motion = None
+    if len(usable) >= 2:
+        first_sky = usable[0][1].wcs.pixel_to_world(usable[0][2].x, usable[0][2].y)
+        offsets_ra, offsets_dec, years = [], [], []
+        for ref, cutout, measurement in usable:
+            measured_sky = cutout.wcs.pixel_to_world(measurement.x, measurement.y)
+            delta_ra, delta_dec = first_sky.spherical_offsets_to(measured_sky)
+            offsets_ra.append(delta_ra.to_value("arcsec"))
+            offsets_dec.append(delta_dec.to_value("arcsec"))
+            years.append(Time(ref.mjd, format="mjd").decimalyear)
 
-    motion = fit_motion(np.array(years), np.array(offsets_ra), np.array(offsets_dec))
-    saturated_any = any(item[2].saturated for item in measurements)
-    fallback_any = any(item[2].centroid_fallback for item in measurements)
-    motion["reliable"] = not saturated_any and not fallback_any
+        motion = fit_motion(np.array(years), np.array(offsets_ra), np.array(offsets_dec))
+        saturated_any = any(item[2].saturated for item in usable)
+        fallback_any = any(item[2].centroid_fallback for item in usable)
+        motion["reliable"] = not saturated_any and not fallback_any
+    else:
+        saturated_any = any(item[2].saturated for item in usable)
 
     frames = []
-    for index, (ref, _cutout, measurement) in enumerate(measurements):
+    for index, (ref, cutout, measurement) in enumerate(measurements):
         outliers = outlier_stats(crop, crop[index])
+        measured = measurement is not None and not measurement.saturated
+        # The flag mask does not need the target position, so a frame we could not measure still
+        # reports how much of it is bad pixels: that is a statement about the frame, not the star.
+        bad = (
+            measurement.bad_fraction
+            if measurement is not None
+            else frame_bad_fraction(
+                bad_mask(cutout.flags, bad_bits), np.isfinite(cutout.image)
+            )
+        )
         frames.append(
             {
                 "date": ref.date.isoformat(),
@@ -334,12 +420,13 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
                 "obs_id": ref.obs_id,
                 "file": f"{stem}_{ref.date.isoformat()}.webp",
                 "bytes": webp_sizes[ref.date],
-                "bad_fraction": round(measurement.bad_fraction, 5),
+                "bad_fraction": round(bad, 5),
+                "measure_skipped": measure_skipped.get(ref.obs_id),
                 "outlier": {
                     key: None if value is None else round(value, 6)
                     for key, value in outliers.items()
                 },
-                "measure": None if measurement.saturated else {
+                "measure": {
                     "x": round(measurement.x, 3),
                     "y": round(measurement.y, 3),
                     "flux": round(measurement.flux, 4),
@@ -351,37 +438,51 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
                     ),
                     "aperture_flagged": measurement.aperture_flagged,
                     "frames_available": ref.frames_available,
-                },
-                "saturated": measurement.saturated,
-                "centroid_from_prediction": measurement.centroid_fallback,
+                }
+                if measured
+                else None,
+                "saturated": bool(measurement is not None and measurement.saturated),
+                "centroid_from_prediction": bool(
+                    measurement is not None and measurement.centroid_fallback
+                ),
             }
         )
 
     manifest = {
-        "target": request.slug,
-        "name": target.get("name", request.slug),
+        "target": position.label,
+        "name": position.name,
         "band": band,
-        "size_deg": request.size_deg,
+        "size_deg": size_deg,
         "vmin": vmin,
         "vmax": vmax,
         "pixscale_arcsec": round(pixel_scale, 3),
-        "generated_by": f"python -m pipeline.cli build --target {request.slug} --band {band}",
+        "generated_by": "python -m pipeline.cli build "
+        f"--target {position.label} --band {band}",
         "note": (
             "One frame per observing date, all sharing the stretch above. Positions are measured on "
             "each frame's native pixel grid and compared on the sky. A measure of null means the "
-            "target core saturated, so only a lower flux bound exists. motion.reliable is false when "
+            "target core saturated (only a lower flux bound exists) or that the target fell outside "
+            "a clipped cutout, in which case measure_skipped says so. motion.reliable is false when "
             "a saturated core's centroid drifts with the roll angle of each visit."
         ),
-        "collection": request.collection,
+        "collection": collection,
         "band_wavelength_um": BAND_EDGES_UM.get(band),
         "built": date.today().isoformat(),
         "n_frames": len(measurements),
         "n_bands_available": len(summary.bands),
+        "available_bands": summary.bands,
+        "position_note": (
+            "Position propagated with the catalogue proper motion of the named target."
+            if position.pm_ra_cosdec is not None and position.pm_dec is not None
+            else "No proper motion available for this coordinate, so cutouts are centred on the "
+            "position exactly as given; a fast mover may sit off-centre."
+        ),
         "saturated_any": saturated_any,
         "frames": frames,
         "motion": motion,
     }
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / f"{stem}.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    if write_manifest:
+        (out_dir / f"{stem}.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest
