@@ -23,6 +23,126 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 4 — The UI, against committed files — 2026-11-15
+
+Merged in [#6](https://github.com/Moya-Art/ZenithSquad-spherex/pull/6). Squash-merged onto `main`.
+
+### Added
+
+- `web/src/BlinkStage.tsx` — every frame decoded into an `ImageBitmap` **before** play is enabled.
+  Drawing is a single `drawImage` blit, so nothing between two frames flickers; a flicker would read
+  as a real change in the sky. Play stays disabled until the last frame is in memory, and if the
+  wanted frame has not decoded yet the nearest decoded one is drawn, so the stage is never blank.
+- `web/src/Timeline.tsx` — two tracks on one time axis. **SEEN** puts a mark at each epoch's real
+  `t_min`; **FLUX** plots the measured flux against the same x. The alignment is the argument:
+  the hole in the coverage is the hole in the science. Playhead and hover share the axis, and the
+  SVG is rendered at 1 user unit = 1 CSS pixel (measured with `ResizeObserver`) so labels are not
+  distorted and marks do not drift from their dates.
+- `web/src/Inspector.tsx` — per-epoch panel. SNR is the dominant number at 32 px because it decides
+  whether the frame is worth inspecting; flux, good-pixel fraction and the outlier statistics stay
+  as table rows.
+- `web/src/PlateContext.tsx` — target-level reading beside the image: variability across the
+  sequence, centroid motion, catalogue position. Kept separate from the inspector so a single noisy
+  frame can never read as a finding.
+- `web/src/data.ts`, `web/src/viewState.ts`, `web/src/captions.ts` — typed access to
+  `data/fallback/sequence/`, URL state (`?target=&band=&epoch=`, with `epoch` a **date** rather than
+  an index so a pasted link keeps its meaning when the frame list changes), and one plain-language
+  sentence per target.
+- `web/vite.config.ts` — a dev middleware and a build step that serve `../data` at `/data/*`.
+  Nothing in the app knows it is reading committed files, so Phase 5 swaps the loaders only.
+- `web/src/tokens.css` — colour and type tokens, so a palette change does not touch component CSS.
+- `web/public/space-apps-logo.png` — the NASA Space Apps lockup, white artwork on transparency, in
+  the top-left of the chrome.
+
+### Changed
+
+- `web/src/App.css` rewritten as a workbench rather than a centred stack: targets rail, plate
+  (image beside its reading), inspector column, timeline as a real panel instead of a footer strip.
+- `web/src/App.tsx` holds the state machine only — loading, missing, error, ready — and the
+  keyboard map (`Space` play/pause, `←`/`→` step).
+- The image is capped by viewport height (`min(100%, 58vh, 560px)`) so it can never push the light
+  curve off-screen, and the timeline's `H_AXIS` is deeper than the year baseline so the year label
+  under a month tick is not clipped by the viewBox.
+
+### Removed
+
+- The Vite template's `src/assets/hero.png`, `react.svg`, `vite.svg` and `public/icons.svg`, and the
+  template CSS. None of it survived the first real screen.
+
+### Added — development bridge, not a deliverable
+
+- `scripts/dev_sequence.py` — Phase 4 needs a multi-epoch sequence to blink, and Phase 3
+  (`pipeline/sequence.py`) has not landed. This produces the smallest honest stand-in: SIA search →
+  cutout → common grid → one global stretch → aperture flux, SNR and centroid per frame. It states
+  its own gaps in its docstring (approximate photometry, no `SigmaClip`, sequential, PNG not WebP)
+  and is meant to be deleted when Phase 3 lands. The manifest shape is a subset of Phase 3's, so the
+  UI should not need rewriting.
+- `data/fallback/sequence/r_dra_D6.json` plus ten frames — R Draconis, D6, 0.2° field at 6.15″/px,
+  ten epochs spanning 0.989 yr.
+
+### Decisions
+
+- **A shared stretch is not negotiable.** All ten frames use `vmin = -0.0274`, `vmax = 91.76`
+  MJy/sr from the manifest. Per-frame autoscaling would make every epoch look equally bright and
+  destroy the only signal the sequence carries.
+- **Gaps stay gaps.** The marks sit at real `t_min`, and the 197-day and 111-day holes are visible
+  as holes. Evenly spaced dots would be a lie about the coverage.
+- **Motion is reported as consistent with zero.** The first and last centroids differ by 5.81″ over
+  0.99 yr, which looks like a detection until the error is read: the fitted rate is
+  (−3.32, −3.08) ± (0.94, 2.03) ″/yr and the centroid wanders by (1.02, 2.22)″. R Draconis pulsates;
+  it does not move. The UI says "consistent with zero" and explains why.
+- **The URL carries a date, not an index**, so a shared link survives the frame list changing.
+
+### Plan changes
+
+Reason for all of them: Phase 4 names a UI for a sequence that Phase 3 has not built, and two of its
+specified panels assume quantities the committed data does not carry.
+
+- **Phase 4, "Time strip".** Said a strip of dates at their real `t_min`. Now a two-track timeline:
+  coverage above, measured flux below, sharing one axis. A strip of dates alone answered "when did we
+  look" but left "what changed" to a number in a panel; the whole point of the tool is the two
+  together, and the alignment is what shows the gaps are the gaps in the science.
+- **Phase 4, "Measurement panel".** Said `"Moved 0.8″ ± 0.3″ over 1.02 years", always visible`. The
+  measured value is **not** significant (5.81″ over 0.99 yr, but (−3.32, −3.08) ± (0.94, 2.03) ″/yr
+  against (1.02, 2.22)″ of wander), so printing a bare "moved" figure would assert a detection that
+  is not there. Now the panel states "consistent with zero" and shows the fit and the scatter that
+  justify it. The rule stands — the motion verdict is always visible — but it must not overstate.
+- **Phase 4, "Outlier strip".** Said a strip. Kept as rows in the epoch inspector instead: mean,
+  median and max-abs change describe one frame, not a series, so they belong with the rest of the
+  per-frame numbers rather than in a third timeline-like element competing for the same axis.
+- **Phase 4, "URL state".** Said `/view?ra=&dec=&band=&epoch=&fov=`. Now
+  `/view?target=&band=&epoch=`: the committed build identifies a sequence by target slug, and
+  arbitrary coordinates need the Phase 5 API. `epoch` is a date, not an index, so a pasted link keeps
+  its meaning when the frame list changes. `fov` is dropped until Phase 5 can serve a second field size.
+- **Phase 3, `scripts/dev_sequence.py`.** Phase 3 owns the sequence builder and has not landed, so
+  Phase 4 could not be built against real multi-epoch data. A development bridge was added and is
+  declared in its own docstring as not a deliverable, with an expiry: delete it when
+  `pipeline/sequence.py` lands. Its manifest is a deliberate subset of Phase 3's so the UI does not
+  need rewriting.
+
+### Verification
+
+- `npm run build` → clean, 25 modules, 237 kB JS / 74 kB gzipped.
+- `npm run lint` → 0 errors, 2 warnings (both `set-state-in-effect` on effects that synchronise with
+  an external fetch, which is the correct use of an effect).
+- Ten epochs render and blink with no white flash; the timeline shows the 197-day and 111-day gaps
+  at their real positions.
+- Flux ranges 9 954 → 24 143 MJy/sr (2.43×) across the sequence, SNR 71.9 → 689.2, bad pixels
+  ≈ 0.1% — so the brightness change is in the data, not the display.
+- Layout checked at 1440 px and 700 px by screenshot, and the DOM measured (`scrollWidth` equals
+  `clientWidth` at both widths, so nothing overflows).
+
+### Notes for the next phase
+
+- **Delete `scripts/dev_sequence.py` when `pipeline/sequence.py` lands.** It is a bridge with a
+  stated expiry, and its manifest is a subset of the real one by design.
+- Chrome's headless `--window-size` clamps the viewport to a 500 px minimum; screenshots below that
+  measure 500 px. Do not trust a "390 px" capture as evidence of the narrow layout — measure the DOM.
+- Phase 5 replaces `loadSequence`/`loadTargets`/`frameUrl` in `web/src/data.ts` and the Vite data
+  middleware. No component should need to change.
+
+---
+
 ## Phase 2 — Timeline pipeline — 2026-11-15
 
 Merged in [#4](https://github.com/Moya-Art/ZenithSquad-spherex/pull/4). Squash-merged onto `main`.
