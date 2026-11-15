@@ -1,0 +1,18 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+dist/
+
+# Data
+data/cache/
+
+# Secrets
+.env
+.env.*
+
+# OS
+.DS_Store
