@@ -595,6 +595,15 @@
   font-size: 8px;
 }
 
+/* Stated where the curve would be, so the empty track reads as "no photometry,
+   and here is why" rather than as a measured zero. */
+.timeline-nophotom {
+  fill: #55545f;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  letter-spacing: 0.1px;
+}
+
 .timeline-foot {
   display: flex;
   align-items: baseline;

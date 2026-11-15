@@ -1,4 +1,5 @@
 import type { Frame, Sequence } from './data'
+import { formatFlux } from './data'
 
 /**
  * Per-frame inspection.
@@ -30,7 +31,9 @@ export function Inspector({ sequence, frame }: Props) {
         ? 'detected, low confidence'
         : snrState === 'weak'
           ? 'below detection threshold'
-          : 'no photometry in this frame'
+          : frame.saturated
+            ? 'core saturated, no photometry'
+            : 'no photometry in this frame'
 
   return (
     <aside className="inspector">
@@ -54,9 +57,9 @@ export function Inspector({ sequence, frame }: Props) {
 
       <div className="inspect-table">
         <div className="inspect-row">
-          <span>flux</span>
+          <span>flux (mJy)</span>
           <span className="mono tnum">
-            {measure ? `${measure.flux.toFixed(0)} ± ${measure.flux_err.toFixed(0)}` : '—'}
+            {measure ? formatFlux(measure.flux, measure.flux_err) : '—'}
           </span>
         </div>
         <div className="inspect-row">
