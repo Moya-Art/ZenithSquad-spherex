@@ -25,7 +25,7 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ## Phase 4 — The UI, against committed files — 2026-11-15
 
-Merged in [#5](https://github.com/Moya-Art/ZenithSquad-spherex/pull/5). Squash-merged onto `main`.
+Merged in [#6](https://github.com/Moya-Art/ZenithSquad-spherex/pull/6). Squash-merged onto `main`.
 
 ### Added
 
@@ -92,6 +92,33 @@ Merged in [#5](https://github.com/Moya-Art/ZenithSquad-spherex/pull/5). Squash-m
   (−3.32, −3.08) ± (0.94, 2.03) ″/yr and the centroid wanders by (1.02, 2.22)″. R Draconis pulsates;
   it does not move. The UI says "consistent with zero" and explains why.
 - **The URL carries a date, not an index**, so a shared link survives the frame list changing.
+
+### Plan changes
+
+Reason for all of them: Phase 4 names a UI for a sequence that Phase 3 has not built, and two of its
+specified panels assume quantities the committed data does not carry.
+
+- **Phase 4, "Time strip".** Said a strip of dates at their real `t_min`. Now a two-track timeline:
+  coverage above, measured flux below, sharing one axis. A strip of dates alone answered "when did we
+  look" but left "what changed" to a number in a panel; the whole point of the tool is the two
+  together, and the alignment is what shows the gaps are the gaps in the science.
+- **Phase 4, "Measurement panel".** Said `"Moved 0.8″ ± 0.3″ over 1.02 years", always visible`. The
+  measured value is **not** significant (5.81″ over 0.99 yr, but (−3.32, −3.08) ± (0.94, 2.03) ″/yr
+  against (1.02, 2.22)″ of wander), so printing a bare "moved" figure would assert a detection that
+  is not there. Now the panel states "consistent with zero" and shows the fit and the scatter that
+  justify it. The rule stands — the motion verdict is always visible — but it must not overstate.
+- **Phase 4, "Outlier strip".** Said a strip. Kept as rows in the epoch inspector instead: mean,
+  median and max-abs change describe one frame, not a series, so they belong with the rest of the
+  per-frame numbers rather than in a third timeline-like element competing for the same axis.
+- **Phase 4, "URL state".** Said `/view?ra=&dec=&band=&epoch=&fov=`. Now
+  `/view?target=&band=&epoch=`: the committed build identifies a sequence by target slug, and
+  arbitrary coordinates need the Phase 5 API. `epoch` is a date, not an index, so a pasted link keeps
+  its meaning when the frame list changes. `fov` is dropped until Phase 5 can serve a second field size.
+- **Phase 3, `scripts/dev_sequence.py`.** Phase 3 owns the sequence builder and has not landed, so
+  Phase 4 could not be built against real multi-epoch data. A development bridge was added and is
+  declared in its own docstring as not a deliverable, with an expiry: delete it when
+  `pipeline/sequence.py` lands. Its manifest is a deliberate subset of Phase 3's so the UI does not
+  need rewriting.
 
 ### Verification
 
