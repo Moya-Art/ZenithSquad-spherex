@@ -40,6 +40,9 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
   reprojection onto the first grid, common-coverage crop, stretch, WebP, manifest.
 - `pipeline/cli.py build --target r_dra` — a row per date as it completes.
 - `data/fallback/sequence/r_dra_D1.json` and 21 `r_dra_D1_<date>.webp` frames (370–726 bytes each).
+- `data/fallback/sequence/r_dra_D6.json` and 20 `r_dra_D6_<date>.webp` frames. D1 is the band the
+  plan's rule picks; D6 is built too because `web/src/data.ts` asks for the sequence of the target's
+  preview band, and the merged UI would otherwise show "no sequence yet".
 - `tests/` — 51 tests, none touching the network; one reads the committed sequence.
 - **Deleted `scripts/dev_sequence.py`**, as its own note in the Phase 4 entry asked once
   `pipeline/sequence.py` existed. Two manifest producers is two truths.
@@ -53,6 +56,8 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 - `bad_fraction` 0.015–0.106 — believable, and only computable because the mask is per-bit.
 - Motion: first-to-last 14.89″ over 0.46 yr, fitted rate `+6.33, +0.93` arcsec/yr with residuals of
   3.82 and 2.21″. `significant: false`, `reliable: false`.
+- D6, for the UI: 20 dates, `vmin = −0.035`, `vmax = 7.991`, first-to-last 5.43″ over 0.99 yr, fitted
+  rate `+2.07, +0.97` arcsec/yr, also `significant: false`.
 
 ### Decisions
 
