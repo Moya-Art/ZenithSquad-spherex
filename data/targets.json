@@ -1,0 +1,55 @@
+{
+  "targets": [
+    {
+      "slug": "r_dra",
+      "name": "R Draconis",
+      "ra": 248.16775,
+      "dec": 66.75497,
+      "band": "D6",
+      "pm_ra_cosdec": -20.643,
+      "pm_dec": 6.149,
+      "pm_source": "Gaia DR3 1648328016354496384"
+    },
+    {
+      "slug": "wise0855",
+      "name": "WISE 0855",
+      "ra": 133.818908,
+      "dec": -7.247047,
+      "band": "D5",
+      "pm_ra_cosdec": -8123.7,
+      "pm_dec": 673.2,
+      "pm_source": "Simbad WISE J085510.83-071442.5 (2021ApJS..253....7K)",
+      "coordinate_note": "J2000 position; the challenge statement's 08h55m10.83s -07d14m42.5s is the 2010/2011 discovery position, ~86 arcsec away"
+    },
+    {
+      "slug": "barnard",
+      "name": "Barnard's Star",
+      "ra": 269.45402,
+      "dec": 4.69336,
+      "band": "D6",
+      "pm_ra_cosdec": -801.551,
+      "pm_dec": 10362.394,
+      "pm_source": "Gaia DR3 4472832130942575872"
+    },
+    {
+      "slug": "eps_ind",
+      "name": "Epsilon Indi B",
+      "ra": 330.84025,
+      "dec": -56.78597,
+      "band": "D6",
+      "pm_ra_cosdec": 3966.661,
+      "pm_dec": -2536.192,
+      "pm_source": "Gaia DR3 6412595290592307840"
+    },
+    {
+      "slug": "rw_aur",
+      "name": "RW Aurigae",
+      "ra": 76.956,
+      "dec": 30.401,
+      "band": "D6",
+      "pm_ra_cosdec": 2.641,
+      "pm_dec": -27.398,
+      "pm_source": "Gaia DR3 156430822114424576"
+    }
+  ]
+}
