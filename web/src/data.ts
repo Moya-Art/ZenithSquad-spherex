@@ -178,3 +178,145 @@ export function frameUrl(frame: Frame): string {
 export function sequenceUrl(slug: string, band: string): string {
   return `${BASE}data/fallback/sequence/${slug}_${band}.json`
 }
+
+// --- the 102-band cube -------------------------------------------------------------------------
+
+export type CubePlane = {
+  index: number
+  band: string
+  detector: number
+  channel: number
+  wavelength_um: number
+  bandwidth_um: number
+  /** The dichroic channels (indices 50 and 51) carry no data by design. */
+  blank: boolean
+  coverage: number
+  nan_pixels: number
+  bytes: number
+  file: string
+  url?: string
+}
+
+export type CubeChannel = {
+  channel: 'R' | 'G' | 'B'
+  index: number
+  band: string
+  wavelength_um: number
+}
+
+export type CubeSpectrumPoint = {
+  index: number
+  flux_mjy: number | null
+  noise_mjy: number | null
+  annulus_clipped: boolean
+}
+
+export type CubeProgress = {
+  planes_done: number
+  planes_total: number | null
+  bytes_done: number | null
+  bytes_total: number | null
+  started_at: string | null
+  updated_at: string | null
+  eta_seconds: number | null
+}
+
+/**
+ * Either a finished cube or the state of the build that will produce one. A build is reported with
+ * the planes that already exist, which is what lets the viewer open before plane 102 lands.
+ */
+export type Cube = {
+  state: 'ready' | 'queued' | 'building' | 'failed'
+  source?: 'committed' | 'hit'
+  target: string
+  name: string
+  ra: number
+  dec: number
+  size_deg: number
+  crop_px?: number
+  crop_arcmin?: number
+  pixscale_arcsec?: number
+  target_xy?: [number, number]
+  tile?: {
+    norder: number
+    ipix: number
+    dirid: number
+    version: string
+    url: string
+    bytes: number | null
+    shape: [number, number]
+    crop: [number, number, number, number]
+    mosaic_epoch: number
+  }
+  stretch?: { mode: string; vmin: number; vmax: number }
+  planes: CubePlane[]
+  composite?: {
+    file: string
+    url?: string
+    bytes: number
+    channels: CubeChannel[]
+    note?: string
+  } | null
+  spectrum?: { unit: string; points: CubeSpectrumPoint[] }
+  depth?: number
+  blank_planes?: number[]
+  notes?: Record<string, string>
+  message?: string
+  progress?: CubeProgress
+  error?: { reason: string; detail: string }
+  keeps_running?: boolean
+  retry_with_refresh?: boolean
+}
+
+export type CubeRequest = {
+  target?: string
+  ra?: number
+  dec?: number
+  size?: number
+  refresh?: boolean
+}
+
+/**
+ * One request that answers with either the cube or the build's progress.
+ *
+ * A 501 or a network failure falls back to the committed artifact, so a demo survives the API being
+ * down; a 404 is not "missing" here, because a cube is never legitimately absent for a coordinate
+ * the archive covers.
+ */
+export async function loadCube(request: CubeRequest): Promise<Cube | null> {
+  const query = new URLSearchParams()
+  if (request.target) query.set('target', request.target)
+  if (request.ra != null && request.dec != null) {
+    query.set('ra', String(request.ra))
+    query.set('dec', String(request.dec))
+  }
+  if (request.size != null) query.set('size', String(request.size))
+  if (request.refresh) query.set('refresh', 'true')
+
+  let apiError: unknown = null
+  try {
+    return await getJson<Cube>(`${API}/cube?${query.toString()}`)
+  } catch (error) {
+    apiError = error
+  }
+
+  if (request.target) {
+    try {
+      return await getJson<Cube>(`${BASE}data/fallback/cube/${request.target}.json`)
+    } catch {
+      // Fall through: report the API's failure, which is the real story.
+    }
+  }
+  throw apiError ?? new Error('cube unavailable')
+}
+
+export function cubePlaneUrl(plane: CubePlane): string {
+  if (plane.url) return absolute(plane.url)
+  return `${BASE}data/fallback/cube/${plane.file}`
+}
+
+export function cubeCompositeUrl(cube: Cube): string | null {
+  if (!cube.composite) return null
+  if (cube.composite.url) return absolute(cube.composite.url)
+  return `${BASE}data/fallback/cube/${cube.composite.file}`
+}
