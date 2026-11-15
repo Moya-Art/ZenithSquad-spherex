@@ -23,6 +23,120 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 5 — API — 2026-11-15
+
+Merged in [#9](https://github.com/Moya-Art/ZenithSquad-spherex/pull/9). Squash-merged onto `main`.
+
+### Added
+
+- `api/app/main.py` — `/targets`, `/frames`, `/preview`, `/cube` (501), `/healthz`. Every handler is a
+  plain `def`, so FastAPI runs it in its threadpool: `pipeline` blocks on `urllib`, `requests` and
+  `astropy`, and an `async def` route would stall the event loop for the length of a FITS download.
+- `api/app/service.py` — the only module that imports `pipeline`. `live_sequence` builds on a cold key
+  and returns `(manifest, "miss"|"hit")`; `preview_webp` resolves an `obs_id` through the cached
+  manifest, then a fresh SIA query, then a 404. `_BUILD_LOCK` serialises cold builds, because Cloud
+  Run runs requests concurrently and each build fans out to eight workers against a ~12-request limit.
+- `api/app/cache.py` — sequence key `sha1(f"{ra:.5f}:{dec:.5f}:{band}:{size}")` holding the manifest
+  and its WebPs, and frame key `sha1(f"{obs_id}:{ra:.5f}:{dec:.5f}:{size}")` holding one WebP. Writes
+  are atomic, so a killed build cannot leave a manifest that reads as a hit.
+- `api/Dockerfile` — `python:3.14-slim`, the same interpreter the venv was frozen from. Not deployed;
+  Cloud Run, Artifact Registry and Vercel stay in Phase 8.
+- `pipeline/sequence.py` — `build_from_position(PositionSpec)`, so a raw coordinate builds the same
+  sequence a named target does. `build_sequence(request)` is now a thin wrapper over it.
+- `pipeline/measure.py` — `TargetOutsideFrame`.
+- `tests/test_api_cache.py`, `tests/test_api_routes.py` — 26 tests, no network.
+- `web/src/data.ts` — `/targets` and `/frames` first, committed file as the fallback for any failure
+  that is not a 404 or a 422. `frameUrl` prefers the API's per-frame `url`.
+- `web/vite.config.ts` — `/api` proxy to `127.0.0.1:8000`, so dev is same-origin and needs no CORS.
+
+### Measured
+
+- Cold `/frames` for `r_dra` D1: **31.5 s**, `X-Cache: miss`; the same request immediately after:
+  **0.04 s**, `X-Cache: hit`. 21 frames, `vmin = 0.024`, `vmax = 3.985`, the same stretch the
+  committed manifest has — two independent builds agreeing.
+- Stage 0 probe against the live archive: Barnard D6, 14 dates, 117 s with FITS cached (one 502
+  retry), 179 MB peak RSS, nothing downloaded; raw coordinate RA 90 Dec +20 with an empty cache,
+  12 dates, **67 s**, **52.9 MB** downloaded, 215 MB peak RSS. Both well inside `--memory 2Gi
+  --timeout 600`, so the live default field size stays **0.3°**.
+- A coordinate 70° from every named target (RA 200, Dec −80) returns a full sequence, so the arbitrary
+  coordinate path is real and not only the five slugs.
+- `pytest tests/ -q` → **77 passed** (51 + 26). `npm run build` → 238.5 kB / 74.8 kB gzipped.
+  `npm run lint` → 0 errors, 2 pre-existing warnings.
+
+### Decisions
+
+- **A cold `/frames` builds the sequence, it does not list epochs.** An epoch list leaves the renderer
+  to stretch each frame on request, and a per-frame scale manufactures variability that is not in the
+  sky (§4). The price is a slow first request; every later one is a file read.
+- **`/preview` uses the sequence's stretch.** It resolves `obs_id` through the cached manifest first,
+  because otherwise every image request would re-query the archive.
+- **Failures keep their identity.** Zero frames → 404 saying it is a measured zero. Unreachable
+  archive → 503, or 200 + `stale: true` + `no-store` when a cached manifest can answer. Unparseable
+  → 502. Out-of-range parameters → 422. A bare 500 is never the answer to an IRSA afternoon.
+- **Cold builds are serialised.** `--concurrency 4` times eight workers would break IRSA's limit; a
+  second visitor waits and usually finds the first build's cache.
+- **The API is not the only source.** `data.ts` falls back to the committed sequence, so the venue
+  Wi-Fi cannot leave a blank screen. Verified by stopping the API and reloading.
+- **`/cube` is a registered 501.** The 102 planes arrive with Phase 6's `pipeline/cube.py`.
+- **A target outside a clipped cutout is a fact, not a crash.** IRSA clips at the detector edge and
+  the predicted pixel can land past the returned array; that frame is `measure: null` with
+  `measure_skipped` explaining it, and takes no part in the motion fit. `bad_fraction` is still
+  computed, because the flag mask does not need the target position.
+
+### Findings that changed the plan
+
+- **A raw coordinate crashed the pipeline.** The probe died on `IndexError: index 87 is out of bounds
+  for axis 0 with size 81` — the target was outside a 175×81 clipped cutout. Fixed here, not deferred.
+- **Barnard's Star is flagged `BLOOM` on its core in all 14 D6 frames, with no `OVERFLOW`**, at
+  ~1 000–1 400 MJy/sr. Phase 3's rule counts `BLOOM` as saturation, so every Barnard frame has no
+  photometry. **Open for Phase 7:** is `BLOOM` alone a saturated core, or bloom-affected pixels around
+  a bright neighbour? If the latter, the saturation set becomes `OVERFLOW` only — that changes a
+  Phase 3 rule, so it was not changed here.
+- **The motion panel ignored `motion.reliable`.** The centroid fit runs whether or not the photometry
+  is usable, so Barnard produced "moved 8.4″ … consistent with real motion" out of saturated cores.
+  Phase 3's own note said the panel must read `reliable` first. It now says "not measurable".
+
+### Plan changes
+
+- **§6 Phase 5, `/frames`** — "live SIA query → epoch list" became "the whole sequence is built, one
+  shared stretch, cached". Proposed and approved before implementation: the epoch-list version cannot
+  honour §4's single stretch.
+- **§6 Phase 5, `/cube`** — was in Phase 5's route list. Now a registered `501`; the 102 planes and
+  the spectrum stay with Phase 6. Proposed and approved.
+- **§6 Phase 5, cache key** — the per-frame key is kept and a sequence-level key
+  `sha1(f"{ra:.5f}:{dec:.5f}:{band}:{size}")` was added, because a single stretch only exists per
+  sequence, not per frame.
+- **§6 Phase 5, "5 decimals ≈ 1″"** — arithmetic correction, not a rule change: five decimals of a
+  degree is **0.036″**. The rounding still means a re-click is one entry; a click an arcsecond away is
+  a new one.
+- **§6 Phase 5, concurrency** — added that cold builds are serialised inside the process, with the
+  ~12-request IRSA limit as the reason.
+- **§5 repository tree** — `api/app/main.py` gained `app/service.py`, `app/cache.py` and
+  `api/Dockerfile`.
+
+### Verification
+
+- `pytest tests/ -q` → 77 passed, no network in any of them.
+- Live curl: `/healthz`, `/targets`, cold/warm `/frames`, cold/warm `/preview`, `/cube` → 501,
+  `ra=999` → 422, unknown `obs_id` → 404. `If-None-Match` → 304. No response carried `fits`.
+- IRSA forced unreachable with a dead HTTPS proxy: cached key still `hit`, `?refresh=true` → 200
+  `stale`, uncached key → 503 naming the cause.
+- In the browser at 1440×900: Barnard live (14 epochs, image rendered, panel reads "not measurable");
+  R Draconis with the API stopped (20 committed epochs, still renders).
+
+### Notes for the next phase
+
+- Phase 6 replaces the `/cube` stub and nothing else: `pipeline/cube.py` is a new file, and the route
+  becomes real without touching the cache or the fallback.
+- A Cloud Run cold start begins with an empty disk, so every new container pays one cold `/frames`
+  build. Phase 8's bucket is the fix; `API_CACHE_DIR` and `FITS_CACHE_DIR` are already the seams.
+- The `404` for a zero-coverage coordinate is exercised by a stubbed archive only: DR1 is all-sky, so
+  a real empty patch may not exist to test against.
+- `stale: true` needs `band` in the request, because the cache key contains it.
+- Phase 7's Photometry for Barnard depends on the `BLOOM` question above.
+
+---
+
 ## Phase 3 — Sequence build (R Draconis) — 2026-11-15
 
 ### Added
