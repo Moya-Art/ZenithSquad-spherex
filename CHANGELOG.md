@@ -23,6 +23,110 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 3 — Sequence build (R Draconis) — 2026-11-15
+
+### Added
+
+- `pipeline/fits_io.py` — one level-2 cutout: IMAGE minus ZODI in MJy/sr, FLAGS, VARIANCE, celestial
+  WCS, and the central wavelength from the `W` WAVETAB WCS. `BUNIT` is checked, not assumed.
+- `pipeline/flags.py` — bit names read from the `MSKN*` cards in the FLAGS header, never hardcoded.
+  The bad set is the 19 names the official photometry demo uses; `SOURCE` is deliberately not bad,
+  because 99.9 % of pixels carry it.
+- `pipeline/render.py` — one global percentile stretch; WebP encoder steps quality down until a frame
+  fits under 60 KB.
+- `pipeline/measure.py` — `centroid_2dg` on a 9×9 box, r = 3 px aperture, sigma-clipped annulus, flux
+  in mJy from the pixel area, error from VARIANCE, `sky_offset` in arcseconds.
+- `pipeline/sequence.py` — band selection, one frame per date, threaded download with cache,
+  reprojection onto the first grid, common-coverage crop, stretch, WebP, manifest.
+- `pipeline/cli.py build --target r_dra` — a row per date as it completes.
+- `data/fallback/sequence/r_dra_D1.json` and 21 `r_dra_D1_<date>.webp` frames (370–726 bytes each).
+- `data/fallback/sequence/r_dra_D6.json` and 20 `r_dra_D6_<date>.webp` frames. D1 is the band the
+  plan's rule picks; D6 is built too because `web/src/data.ts` asks for the sequence of the target's
+  preview band, and the merged UI would otherwise show "no sequence yet".
+- `tests/` — 51 tests, none touching the network; one reads the committed sequence.
+- **Deleted `scripts/dev_sequence.py`**, as its own note in the Phase 4 entry asked once
+  `pipeline/sequence.py` existed. Two manifest producers is two truths.
+
+### Measured
+
+- R Draconis, `spherex_dr1`, D1: **21 dates**, 67 frames. D1 ties D4 on dates (21) and wins on frames
+  (67 against 65), with the sharper PSF.
+- One stretch for the sequence: `vmin = 0.024`, `vmax = 3.985` MJy/sr.
+- Crop 88×80 px of the 175×176 requested: 13 of the 21 cutouts are clipped by the detector edge.
+- `bad_fraction` 0.015–0.106 — believable, and only computable because the mask is per-bit.
+- Motion: first-to-last 14.89″ over 0.46 yr, fitted rate `+6.33, +0.93` arcsec/yr with residuals of
+  3.82 and 2.21″. `significant: false`, `reliable: false`.
+- D6, for the UI: 20 dates, `vmin = −0.035`, `vmax = 7.991`, first-to-last 5.43″ over 0.99 yr, fitted
+  rate `+2.07, +0.97` arcsec/yr, also `significant: false`.
+
+### Decisions
+
+- **A sequence frame is a date.** The plan asks for "one WebP per date" and "N frames sharing one
+  vmin/vmax"; those only reconcile if the unit is the date. Each date takes its earliest exposure and
+  records `frames_available`.
+- **Measured on the native grid, reprojected only for display**, because interpolation smooths a PSF
+  barely one pixel wide and would bias the centroid.
+- **`measure` is null when the core saturates**, rather than a flux with an invented `snr`.
+- **The star is excluded from the stretch** (a 12 px disc). Its halo reaches ~30 MJy/sr while the
+  field's 99th percentile is 2.8; including it compressed the field into the bottom 9 % of the range
+  and produced 0.3 KB frames that showed almost nothing.
+- **NaN at the saturated core is filled for display only.** The archive stores NaN on the most
+  saturated pixels; reprojecting that put a black hole in the middle of a bright star.
+- **Motion is a fitted rate with its scatter**, not an assumed error on first-minus-last. An assumed
+  0.5 px turned a 14″ wander into a fake 3-sigma detection; the fit reports no significant motion.
+
+### Plan changes
+
+- **§1.2** — the R Draconis row said "D3 or D6 (20)". Phase 2's committed baseline measures D1 and D4
+  at 21 dates, so it now reads "D1 or D4 (21)".
+- **§5** — `data/fallback/{target}/` becomes `data/fallback/sequence/`, one `{slug}_{band}.json` plus
+  `{slug}_{band}_{date}.webp` frames. `web/src/data.ts` shipped that layout in Phase 4; conforming to
+  it beats shipping two layouts that disagree.
+- **§6 item 6 (annulus)** — 5–8 px becomes 8–16 px. At 6.15″/px the planned annulus is 30–49″ from the
+  centre, which sits inside the target's own wings: measured background 21.8 MJy/sr against a sky of
+  0.13. **This one changes the method and needs your approval** — it is not silently adopted.
+- **§6 item 6 (fields)** — `x, y, flux, flux_err, snr, bad_fraction, wavelength_um` move under
+  `measure`, which is `null` for saturated frames; `saturated`, `bytes` and `frames_available` sit on
+  the frame itself.
+- **§6 items 3–4 (stretch)** — the global stretch is computed over all frames *excluding a 12 px disc
+  around the target*, so a saturated core cannot set `vmax` and flatten the field.
+- **§6 done-when (motion)** — `dx_arcsec`/`dy_arcsec` are reported inside `motion` alongside a fitted
+  rate, slope error, scatter and a `significant` flag, because arcseconds with an error are not enough
+  to tell motion from a wandering centroid.
+
+### Findings that changed the plan
+
+- **R Draconis is saturated in all six bands**: `OVERFLOW` + `BLOOM` on the peak in every detector,
+  2 300–6 500 MJy/sr. Epsilon Indi is saturated too; Barnard's Star and RW Aurigae are clean; WISE
+  0855 is not detected at all. A quarter of the named targets cannot be photometered by SPHEREx.
+- **13 of 21 cutouts arrive clipped** (97×175, 139×97, 176×100 …), which is why the crop is 88×80 and
+  why the target can sit at x = 50 in one frame and x = 87 in another. Positions are compared through
+  the WCS, never through pixel indices.
+- **The cutout SIP coefficients do work.** SIP reproduces the target pixel to ~0.2 px; dropping it
+  moves the answer by up to 73″. The astropy warning about SIP is noise here.
+- **R Draconis is the wrong target to prove motion on.** Its real motion is 0.02″/yr — 0.003 px. What
+  the centroids do is drift with the roll angle of each visit. Barnard's Star is the honest test.
+
+### Verification
+
+- `pytest tests/ -q` → 51 passed.
+- A contact sheet of six dates opened and looked at: filled core, visible field stars, target in the
+  same place in every tile.
+- Every frame under 60 KB, and the manifest's `bytes` matches the files on disk.
+- `python -m pipeline.cli build --target r_dra --band D1` reproduces all of the above from the cache.
+
+### Notes for the next phase
+
+- Phase 4 will show **no measure** for every `r_dra` frame, because the star saturates. That is the
+  correct rendering, not a missing field; the panel must read `motion.reliable` before saying
+  anything about movement.
+- `measure.py` has never run against an unsaturated real target. RW Aurigae or Barnard's Star in
+  Phase 7 is where `snr` first means something.
+- The sequence is 88×80 px because that is the region all 21 visits cover. A smaller request would
+  clip less but would not enlarge that intersection.
+
+---
+
 ## Phase 4 — The UI, against committed files — 2026-11-15
 
 Merged in [#6](https://github.com/Moya-Art/ZenithSquad-spherex/pull/6). Squash-merged onto `main`.

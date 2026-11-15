@@ -26,13 +26,16 @@ from astroquery.ipac.irsa import Irsa
 from PIL import Image
 from pyvo.dal.exceptions import DALServiceError
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from pipeline import catalog  # noqa: E402
+
 conf.remote_timeout = 120
 
 COLLECTION = "spherex_dr1"
 SEARCH_RADIUS = 1 * u.arcsec
 PERCENTILES = (1.0, 99.5)
 MAX_ATTEMPTS = 5
-J2000_YEAR = 2000.0
 
 EXIT_UNKNOWN = 2
 EXIT_NO_ROWS = 3
@@ -51,15 +54,8 @@ def sia_name(band):
 
 
 def propagate(ra, dec, pm_ra_cosdec, pm_dec, epoch_year):
-    """Move a J2000 position to the exposure epoch with constant proper motion.
-
-    First order is enough here: the largest motion among these targets is 0.077 deg
-    (Barnard's Star), where the neglected second-order term is well under an arcsecond.
-    """
-    years = epoch_year - J2000_YEAR
-    ra_out = ra + years * pm_ra_cosdec / 3.6e6 / np.cos(np.radians(dec))
-    dec_out = dec + years * pm_dec / 3.6e6
-    return ra_out, dec_out
+    """Kept as an alias so this script reads unchanged; the implementation lives in the pipeline."""
+    return catalog.propagate(ra, dec, pm_ra_cosdec, pm_dec, epoch_year)
 
 
 def search_rows(ra, dec, collection=COLLECTION):

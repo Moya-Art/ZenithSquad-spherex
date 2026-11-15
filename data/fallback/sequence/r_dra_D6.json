@@ -2,221 +2,361 @@
   "target": "r_dra",
   "name": "R Draconis",
   "band": "D6",
-  "size_deg": 0.2,
-  "vmin": -0.02741765403945734,
-  "vmax": 91.76036289969869,
-  "pixscale_arcsec": 6.15,
-  "generated_by": "scripts/dev_sequence.py",
-  "note": "development bridge; Phase 3 owns the real sequence builder",
+  "size_deg": 0.3,
+  "vmin": -0.03456843895854135,
+  "vmax": 7.990589609270199,
+  "pixscale_arcsec": 6.158,
+  "generated_by": "python -m pipeline.cli build --target r_dra --band D6",
+  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated, so only a lower flux bound exists. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
+  "collection": "spherex_dr1",
+  "band_wavelength_um": [
+    4.42,
+    5.0
+  ],
+  "built": "2026-11-15",
+  "n_frames": 20,
+  "n_bands_available": 6,
+  "saturated_any": true,
   "frames": [
     {
       "date": "2025-05-16",
-      "t_min": 60811.96,
+      "t_min": 60811.955829,
       "obs_id": "2025W20_2D_0243_1",
-      "file": "r_dra_D6_2025-05-16.png",
-      "bad_fraction": 0.001,
+      "file": "r_dra_D6_2025-05-16.webp",
+      "bytes": 852,
+      "bad_fraction": 0.02872,
       "outlier": {
-        "mean": 2.148744991116171,
-        "median": 0.08366083514615885,
-        "max_abs": 5983.57197412924
+        "mean": 4.0699,
+        "median": 0.087901,
+        "max_abs": 3918.751769
       },
-      "measure": {
-        "x": 58.22393552491163,
-        "y": 58.590334729277465,
-        "flux": 18544.065131869178,
-        "flux_err": 164.89223261271027,
-        "snr": 112.46172629261713
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-05-20",
+      "t_min": 60815.69268,
+      "obs_id": "2025W21_1B_0329_1",
+      "file": "r_dra_D6_2025-05-20.webp",
+      "bytes": 694,
+      "bad_fraction": 0.02245,
+      "outlier": {
+        "mean": 2.07534,
+        "median": 0.058625,
+        "max_abs": 2043.011901
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-06-02",
+      "t_min": 60828.12619,
+      "obs_id": "2025W23_1C_0021_1",
+      "file": "r_dra_D6_2025-06-02.webp",
+      "bytes": 694,
+      "bad_fraction": 0.0282,
+      "outlier": {
+        "mean": 3.51127,
+        "median": 0.032719,
+        "max_abs": 6125.085975
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2025-06-05",
-      "t_min": 60831.19,
+      "t_min": 60831.186215,
       "obs_id": "2025W23_1C_0607_3",
-      "file": "r_dra_D6_2025-06-05.png",
-      "bad_fraction": 0.001,
+      "file": "r_dra_D6_2025-06-05.webp",
+      "bytes": 692,
+      "bad_fraction": 0.02232,
       "outlier": {
-        "mean": 2.3757447636813716,
-        "median": 0.042345087326068426,
-        "max_abs": 1368.6930669215258
+        "mean": 5.256294,
+        "median": 0.042992,
+        "max_abs": 3371.134108
       },
-      "measure": {
-        "x": 57.75508253830956,
-        "y": 57.37480934341373,
-        "flux": 12875.129672826719,
-        "flux_err": 179.15902516588653,
-        "snr": 71.86425389904531
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-06-06",
+      "t_min": 60832.136834,
+      "obs_id": "2025W23_2B_0129_2",
+      "file": "r_dra_D6_2025-06-06.webp",
+      "bytes": 704,
+      "bad_fraction": 0.01697,
+      "outlier": {
+        "mean": 2.826307,
+        "median": 0.047893,
+        "max_abs": 3213.900913
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-06-11",
+      "t_min": 60837.301931,
+      "obs_id": "2025W24_1A_0457_1",
+      "file": "r_dra_D6_2025-06-11.webp",
+      "bytes": 782,
+      "bad_fraction": 0.02895,
+      "outlier": {
+        "mean": 2.082609,
+        "median": 0.02766,
+        "max_abs": 3139.224992
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2025-06-12",
-      "t_min": 60838.25,
+      "t_min": 60838.25287,
       "obs_id": "2025W24_1A_0631_1",
-      "file": "r_dra_D6_2025-06-12.png",
-      "bad_fraction": 0.0008,
+      "file": "r_dra_D6_2025-06-12.webp",
+      "bytes": 802,
+      "bad_fraction": 0.02336,
       "outlier": {
-        "mean": 1.2355742567765626,
-        "median": 0.018334941768060005,
-        "max_abs": 3626.27435925009
+        "mean": 3.215782,
+        "median": 0.030833,
+        "max_abs": 3525.262924
       },
-      "measure": {
-        "x": 58.301635598423715,
-        "y": 58.23598564287115,
-        "flux": 18165.079717287947,
-        "flux_err": 44.54691870903518,
-        "snr": 407.7741007393994
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2025-12-26",
-      "t_min": 61035.22,
+      "t_min": 61035.218053,
       "obs_id": "2025W52_2A_0161_2",
-      "file": "r_dra_D6_2025-12-26.png",
-      "bad_fraction": 0.0008,
+      "file": "r_dra_D6_2025-12-26.webp",
+      "bytes": 910,
+      "bad_fraction": 0.02251,
       "outlier": {
-        "mean": 2.085411149667707,
-        "median": 0.005519984014393381,
-        "max_abs": 1204.9326223419523
+        "mean": 2.633897,
+        "median": 0.024097,
+        "max_abs": 1778.251437
       },
-      "measure": {
-        "x": 57.90402537838547,
-        "y": 57.55529311416685,
-        "flux": 18200.11667355679,
-        "flux_err": 191.7615232107022,
-        "snr": 94.9101590810739
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2025-12-30",
-      "t_min": 61039.16,
-      "obs_id": "2026W01_1A_0257_3",
-      "file": "r_dra_D6_2025-12-30.png",
-      "bad_fraction": 0.0009,
+      "t_min": 61039.152063,
+      "obs_id": "2026W01_1A_0257_1",
+      "file": "r_dra_D6_2025-12-30.webp",
+      "bytes": 936,
+      "bad_fraction": 0.03127,
       "outlier": {
-        "mean": 0.5165942133716215,
-        "median": 0.0,
-        "max_abs": 1269.4136284665906
+        "mean": 2.399079,
+        "median": 0.026848,
+        "max_abs": 2436.020306
       },
-      "measure": {
-        "x": 57.863088261599636,
-        "y": 57.23920294542337,
-        "flux": 12776.850945874963,
-        "flux_err": 45.53578570607633,
-        "snr": 280.5892277416004
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-12-31",
+      "t_min": 61040.581643,
+      "obs_id": "2026W01_1A_0534_3",
+      "file": "r_dra_D6_2025-12-31.webp",
+      "bytes": 694,
+      "bad_fraction": 0.02617,
+      "outlier": {
+        "mean": 2.17607,
+        "median": 0.030306,
+        "max_abs": 1919.595492
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2026-01-01",
-      "t_min": 61041.19,
+      "t_min": 61041.189044,
       "obs_id": "2026W01_1A_0656_1",
-      "file": "r_dra_D6_2026-01-01.png",
-      "bad_fraction": 0.0007,
+      "file": "r_dra_D6_2026-01-01.webp",
+      "bytes": 820,
+      "bad_fraction": 0.04123,
       "outlier": {
-        "mean": 0.4854377058814546,
-        "median": -0.004384277169970044,
-        "max_abs": 1490.148563845744
+        "mean": 1.925669,
+        "median": 0.034543,
+        "max_abs": 2474.275887
       },
-      "measure": {
-        "x": 57.904306696936246,
-        "y": 57.2734367541725,
-        "flux": 22779.28620586064,
-        "flux_err": 41.98170077357168,
-        "snr": 542.6003660194885
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-01-03",
+      "t_min": 61043.567307,
+      "obs_id": "2026W01_2A_0426_1",
+      "file": "r_dra_D6_2026-01-03.webp",
+      "bytes": 732,
+      "bad_fraction": 0.02294,
+      "outlier": {
+        "mean": 1.690604,
+        "median": 0.026746,
+        "max_abs": 2612.600103
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-01-13",
+      "t_min": 61053.410149,
+      "obs_id": "2026W03_1A_0304_1",
+      "file": "r_dra_D6_2026-01-13.webp",
+      "bytes": 814,
+      "bad_fraction": 0.02258,
+      "outlier": {
+        "mean": 3.435064,
+        "median": 0.035286,
+        "max_abs": 2498.32343
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2026-04-22",
-      "t_min": 61152.33,
+      "t_min": 61152.331052,
       "obs_id": "2026W17_1B_0434_1",
-      "file": "r_dra_D6_2026-04-22.png",
-      "bad_fraction": 0.0007,
+      "file": "r_dra_D6_2026-04-22.webp",
+      "bytes": 924,
+      "bad_fraction": 0.02389,
       "outlier": {
-        "mean": 0.664994663393635,
-        "median": -0.007430713106015577,
-        "max_abs": 1094.380391822802
+        "mean": 2.261961,
+        "median": 0.027114,
+        "max_abs": 1470.077543
       },
-      "measure": {
-        "x": 57.533906763763,
-        "y": 57.45255594046351,
-        "flux": 12911.073049048557,
-        "flux_err": 57.82694862403516,
-        "snr": 223.27086862200792
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-04-24",
+      "t_min": 61154.638397,
+      "obs_id": "2026W17_2A_0255_1",
+      "file": "r_dra_D6_2026-04-24.webp",
+      "bytes": 1012,
+      "bad_fraction": 0.05077,
+      "outlier": {
+        "mean": 3.306003,
+        "median": 0.038717,
+        "max_abs": 4118.192854
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2026-05-06",
-      "t_min": 61166.25,
+      "t_min": 61166.253201,
       "obs_id": "2026W19_1A_0842_1",
-      "file": "r_dra_D6_2026-05-06.png",
-      "bad_fraction": 0.0009,
+      "file": "r_dra_D6_2026-05-06.webp",
+      "bytes": 848,
+      "bad_fraction": 0.02117,
       "outlier": {
-        "mean": 0.8292148453962159,
-        "median": -0.011714750959076183,
-        "max_abs": 778.9431250996619
+        "mean": 1.823573,
+        "median": 0.030303,
+        "max_abs": 1736.663124
       },
-      "measure": {
-        "x": 57.424275969503675,
-        "y": 57.74025176651577,
-        "flux": 14317.009606581418,
-        "flux_err": 133.89547000626692,
-        "snr": 106.92676612518196
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-05-09",
+      "t_min": 61169.988973,
+      "obs_id": "2026W19_2A_0976_1",
+      "file": "r_dra_D6_2026-05-09.webp",
+      "bytes": 778,
+      "bad_fraction": 0.02186,
+      "outlier": {
+        "mean": 1.780481,
+        "median": 0.035653,
+        "max_abs": 2228.890041
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2026-05-10",
-      "t_min": 61170.94,
-      "obs_id": "2026W19_2A_1339_1",
-      "file": "r_dra_D6_2026-05-10.png",
-      "bad_fraction": 0.0007,
+      "t_min": 61170.800582,
+      "obs_id": "2026W19_2A_1286_1",
+      "file": "r_dra_D6_2026-05-10.webp",
+      "bytes": 824,
+      "bad_fraction": 0.03411,
       "outlier": {
-        "mean": -0.09149755089413265,
-        "median": -0.024739688753414552,
-        "max_abs": 533.0413344806179
+        "mean": 1.931696,
+        "median": 0.039358,
+        "max_abs": 2991.830065
       },
-      "measure": {
-        "x": 57.58365133504452,
-        "y": 57.61729299278206,
-        "flux": 9953.774123300851,
-        "flux_err": 42.69825423065825,
-        "snr": 233.11899520598737
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-05-11",
+      "t_min": 61171.275048,
+      "obs_id": "2026W20_1A_0101_1",
+      "file": "r_dra_D6_2026-05-11.webp",
+      "bytes": 822,
+      "bad_fraction": 0.02895,
+      "outlier": {
+        "mean": 1.552149,
+        "median": 0.039956,
+        "max_abs": 1276.499594
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     },
     {
       "date": "2026-05-13",
-      "t_min": 61173.25,
-      "obs_id": "2026W20_1A_0795_2",
-      "file": "r_dra_D6_2026-05-13.png",
-      "bad_fraction": 0.0004,
+      "t_min": 61173.244185,
+      "obs_id": "2026W20_1A_0795_1",
+      "file": "r_dra_D6_2026-05-13.webp",
+      "bytes": 818,
+      "bad_fraction": 0.02633,
       "outlier": {
-        "mean": -0.08370461083452488,
-        "median": -0.02884178736888742,
-        "max_abs": 1249.4282353826654
+        "mean": 2.412624,
+        "median": 0.044577,
+        "max_abs": 2942.131764
       },
-      "measure": {
-        "x": 57.785783428413744,
-        "y": 57.75418022167981,
-        "flux": 24142.662098645385,
-        "flux_err": 35.031606286674,
-        "snr": 689.1680016348333
-      }
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
     }
   ],
   "motion": {
-    "dx_arcsec": -2.6946353934620086,
-    "dy_arcsec": -5.142350221725579,
-    "dt_years": 0.9891581108829592,
+    "dx_arcsec": 0.48610415682536845,
+    "dy_arcsec": 5.409906057682206,
+    "dt_years": 0.9898311123288295,
     "slope_arcsec_per_year": [
-      -3.3219424937262305,
-      -3.0812428721165763
+      2.0681149268118815,
+      0.9737314052781084
     ],
     "slope_err": [
-      0.9407484466374952,
-      2.0347811538005938
+      1.4954249936624,
+      1.4678002318188068
     ],
     "rms_scatter_arcsec": [
-      1.0246278753346771,
-      2.216207210165201
+      2.486020853409848,
+      2.440096962673301
     ],
-    "total_arcsec": 5.805585733289903,
-    "significant": false
+    "total_arcsec": 5.431701464939834,
+    "significant": false,
+    "reliable": false
   }
 }

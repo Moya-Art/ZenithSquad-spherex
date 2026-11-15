@@ -1,0 +1,378 @@
+{
+  "target": "r_dra",
+  "name": "R Draconis",
+  "band": "D1",
+  "size_deg": 0.3,
+  "vmin": 0.024220243722566044,
+  "vmax": 3.9852257714391084,
+  "pixscale_arcsec": 6.152,
+  "generated_by": "python -m pipeline.cli build --target r_dra --band D1",
+  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated, so only a lower flux bound exists. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
+  "collection": "spherex_dr1",
+  "band_wavelength_um": [
+    0.75,
+    1.09
+  ],
+  "built": "2026-11-15",
+  "n_frames": 21,
+  "n_bands_available": 6,
+  "saturated_any": true,
+  "frames": [
+    {
+      "date": "2025-06-06",
+      "t_min": 60832.473887,
+      "obs_id": "2025W23_2B_0206_1",
+      "file": "r_dra_D1_2025-06-06.webp",
+      "bytes": 726,
+      "bad_fraction": 0.04021,
+      "outlier": {
+        "mean": 4.063395,
+        "median": 0.182052,
+        "max_abs": 2936.852031
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-04",
+      "t_min": 60860.540193,
+      "obs_id": "2025W27_2A_0243_1",
+      "file": "r_dra_D1_2025-07-04.webp",
+      "bytes": 688,
+      "bad_fraction": 0.03437,
+      "outlier": {
+        "mean": 3.242037,
+        "median": 0.1006,
+        "max_abs": 2259.368677
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": true
+    },
+    {
+      "date": "2025-07-05",
+      "t_min": 60861.962188,
+      "obs_id": "2025W27_2A_0557_1",
+      "file": "r_dra_D1_2025-07-05.webp",
+      "bytes": 720,
+      "bad_fraction": 0.04844,
+      "outlier": {
+        "mean": 4.714862,
+        "median": 0.262325,
+        "max_abs": 1860.610281
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-07",
+      "t_min": 60863.457071,
+      "obs_id": "2025W28_1B_0100_1",
+      "file": "r_dra_D1_2025-07-07.webp",
+      "bytes": 670,
+      "bad_fraction": 0.07675,
+      "outlier": {
+        "mean": 3.919706,
+        "median": 0.150388,
+        "max_abs": 1776.730973
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-14",
+      "t_min": 60870.727533,
+      "obs_id": "2025W29_1A_0141_2",
+      "file": "r_dra_D1_2025-07-14.webp",
+      "bytes": 494,
+      "bad_fraction": 0.02198,
+      "outlier": {
+        "mean": 1.428487,
+        "median": 0.056193,
+        "max_abs": 1568.285945
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-17",
+      "t_min": 60873.443774,
+      "obs_id": "2025W29_1A_0676_1",
+      "file": "r_dra_D1_2025-07-17.webp",
+      "bytes": 684,
+      "bad_fraction": 0.03783,
+      "outlier": {
+        "mean": 1.246755,
+        "median": 0.014588,
+        "max_abs": 1163.007839
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-18",
+      "t_min": 60874.666517,
+      "obs_id": "2025W29_2A_0288_1",
+      "file": "r_dra_D1_2025-07-18.webp",
+      "bytes": 566,
+      "bad_fraction": 0.03429,
+      "outlier": {
+        "mean": 1.321609,
+        "median": 0.043523,
+        "max_abs": 1219.770227
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-20",
+      "t_min": 60876.774132,
+      "obs_id": "2025W29_2A_0805_1",
+      "file": "r_dra_D1_2025-07-20.webp",
+      "bytes": 718,
+      "bad_fraction": 0.06136,
+      "outlier": {
+        "mean": 6.103438,
+        "median": 0.463171,
+        "max_abs": 3499.366957
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-07-22",
+      "t_min": 60878.608219,
+      "obs_id": "2025W30_1B_0289_1",
+      "file": "r_dra_D1_2025-07-22.webp",
+      "bytes": 722,
+      "bad_fraction": 0.06482,
+      "outlier": {
+        "mean": 6.164994,
+        "median": 0.360426,
+        "max_abs": 3578.89474
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-10-17",
+      "t_min": 60965.614508,
+      "obs_id": "2025W42_2A_0244_1",
+      "file": "r_dra_D1_2025-10-17.webp",
+      "bytes": 482,
+      "bad_fraction": 0.02612,
+      "outlier": {
+        "mean": 1.189983,
+        "median": 0.072511,
+        "max_abs": 834.426466
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-10-18",
+      "t_min": 60966.904349,
+      "obs_id": "2025W42_2A_0499_2",
+      "file": "r_dra_D1_2025-10-18.webp",
+      "bytes": 440,
+      "bad_fraction": 0.02036,
+      "outlier": {
+        "mean": 1.294875,
+        "median": 0.083765,
+        "max_abs": 1341.728417
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-10-19",
+      "t_min": 60967.038385,
+      "obs_id": "2025W42_2A_0526_1",
+      "file": "r_dra_D1_2025-10-19.webp",
+      "bytes": 594,
+      "bad_fraction": 0.03056,
+      "outlier": {
+        "mean": 1.177651,
+        "median": 0.006341,
+        "max_abs": 1525.837636
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-10-24",
+      "t_min": 60972.948319,
+      "obs_id": "2025W43_2A_0320_1",
+      "file": "r_dra_D1_2025-10-24.webp",
+      "bytes": 650,
+      "bad_fraction": 0.05304,
+      "outlier": {
+        "mean": 3.16168,
+        "median": 0.156792,
+        "max_abs": 2703.220991
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": true
+    },
+    {
+      "date": "2025-10-25",
+      "t_min": 60973.557852,
+      "obs_id": "2025W43_2A_0464_1",
+      "file": "r_dra_D1_2025-10-25.webp",
+      "bytes": 508,
+      "bad_fraction": 0.02387,
+      "outlier": {
+        "mean": 1.653072,
+        "median": 0.04401,
+        "max_abs": 1610.755297
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-03",
+      "t_min": 60982.317549,
+      "obs_id": "2025W45_1A_0067_1",
+      "file": "r_dra_D1_2025-11-03.webp",
+      "bytes": 370,
+      "bad_fraction": 0.01549,
+      "outlier": {
+        "mean": 1.552569,
+        "median": 0.06627,
+        "max_abs": 1197.285888
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-05",
+      "t_min": 60984.28761,
+      "obs_id": "2025W45_1A_0515_1",
+      "file": "r_dra_D1_2025-11-05.webp",
+      "bytes": 500,
+      "bad_fraction": 0.01578,
+      "outlier": {
+        "mean": 1.097991,
+        "median": 0.069231,
+        "max_abs": 861.97506
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-08",
+      "t_min": 60987.482563,
+      "obs_id": "2025W45_2A_0430_1",
+      "file": "r_dra_D1_2025-11-08.webp",
+      "bytes": 638,
+      "bad_fraction": 0.03144,
+      "outlier": {
+        "mean": 2.335226,
+        "median": 0.0586,
+        "max_abs": 2362.990806
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-13",
+      "t_min": 60992.510912,
+      "obs_id": "2025W46_2A_0002_4",
+      "file": "r_dra_D1_2025-11-13.webp",
+      "bytes": 486,
+      "bad_fraction": 0.10637,
+      "outlier": {
+        "mean": 1.80656,
+        "median": 0.047118,
+        "max_abs": 3026.891973
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-14",
+      "t_min": 60993.253166,
+      "obs_id": "2025W46_2A_0163_1",
+      "file": "r_dra_D1_2025-11-14.webp",
+      "bytes": 416,
+      "bad_fraction": 0.01665,
+      "outlier": {
+        "mean": 0.959845,
+        "median": 0.062484,
+        "max_abs": 363.884941
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-16",
+      "t_min": 60995.358454,
+      "obs_id": "2025W46_2A_0592_1",
+      "file": "r_dra_D1_2025-11-16.webp",
+      "bytes": 578,
+      "bad_fraction": 0.02189,
+      "outlier": {
+        "mean": 2.16697,
+        "median": 0.040178,
+        "max_abs": 1456.26955
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-11-20",
+      "t_min": 60999.636837,
+      "obs_id": "2025W47_2A_0033_1",
+      "file": "r_dra_D1_2025-11-20.webp",
+      "bytes": 512,
+      "bad_fraction": 0.023,
+      "outlier": {
+        "mean": 1.087797,
+        "median": 0.009577,
+        "max_abs": 1343.418235
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    }
+  ],
+  "motion": {
+    "dx_arcsec": 13.658559065295941,
+    "dy_arcsec": -5.921060503954259,
+    "dt_years": 0.4579806849314991,
+    "slope_arcsec_per_year": [
+      6.332535092612371,
+      0.9262451789289495
+    ],
+    "slope_err": [
+      5.447910709532017,
+      3.1497344987994644
+    ],
+    "rms_scatter_arcsec": [
+      3.817783022018216,
+      2.2072687190599374
+    ],
+    "total_arcsec": 14.88674555541489,
+    "significant": false,
+    "reliable": false
+  }
+}
