@@ -3,6 +3,11 @@
 Notable changes to this project, recorded one entry per build phase. Newest phase first.
 Each entry names the pull request and commit that landed it.
 
+**The build plan lives outside this repository.** So any edit to it — a corrected number, a changed
+method, a rule that turned out to be wrong — is recorded here, section by section, in the phase's
+`### Plan changes` block. That block is how a teammate learns the plan moved without being sent the
+document again.
+
 Entry format:
 
 ```markdown
@@ -11,6 +16,9 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ### Added / Changed / Fixed / Removed
 - what changed, and why it matters
+
+### Plan changes
+- every edit to the build plan: which section, what it said before, what it says now, and why
 ```
 
 ---
@@ -58,6 +66,26 @@ Merged in [#4](https://github.com/Moya-Art/ZenithSquad-spherex/pull/4). Squash-m
   that evening. The plan's table now comes from this tool, not from a hand count.
 - **Epsilon Indi QR3 at 0.001° answers intermittently** (502 in the morning, 116 rows in the evening,
   502 again an hour later) while 0.01° answered throughout.
+
+### Plan changes
+
+Reason for all of them: the plan described a method that measurement showed to be broken.
+
+- **§1 intro.** Said the numbers were hand-counted on 2026-11-15. Now says they come from
+  `verify_counts.py` against `data/baseline/counts.json`, and names the two things that move them
+  (weekly ingestion, search radius).
+- **§1.1 table.** WISE 0855 `spherex_dr1`: 258 / 129 / 27 → **261 / 131 / 28** (the archive ingested
+  three frames during the measurement day). Epsilon Indi `spherex_qr3`: 117 / — / 10 → **116 / 58 /
+  10**, now measured at 0.001° rather than 0.01°.
+- **§1.3 table.** The row saying "SIA answers a plain GET with `RESPONSEFORMAT=csv`" was true but
+  misleading: it said nothing about the CSV being malformed. Replaced with the VOTable row plus a new
+  row recording the unquoted-comma defect. The radius row now records that 0.001° answers
+  intermittently for Epsilon Indi QR3.
+- **§2 query form.** `RESPONSEFORMAT=csv` → `RESPONSEFORMAT=votable`, and the script's job changed
+  from "re-derives §1" to "measures §1 and diffs it against the baseline".
+- **§2 rules.** New rule: parse VOTable, not CSV. The old "Epsilon Indi QR3 needed `radius=0.01`"
+  bullet was replaced by "one fixed radius, never an adaptive one", because the fallback was measured
+  to change the counts.
 
 ### Verification
 
@@ -119,6 +147,23 @@ Merged in [#2](https://github.com/Moya-Art/ZenithSquad-spherex/pull/2). Commit `
   the J2000 position, the proper motion, and a `coordinate_note` recording the difference.
 - **Archive counts drift.** WISE 0855 returned 258 rows when the build plan was measured and 261
   later the same day. Counts quoted from here on come from `verify_counts.py` (Phase 2).
+
+### Plan changes
+
+Recorded after the fact, from the edits made in this phase.
+
+- **§9 open items.** "WISE 0855 is visible only at the long-wavelength end" was replaced by the
+  measured depth limit (J = 25, 0.0016σ, 8.7 mag below a 5σ single-frame detection). Added that the
+  challenge coordinate is the 2010/11 discovery position, not J2000, and that every coordinate in the
+  document is J2000 while every frame is 2025–2026.
+- **§4 data rules.** New rule: propagate proper motion to the exposure epoch before pointing anything
+  (Barnard 273.8″, Epsilon Indi 124.0″), with the empty-sky numbers that convinced us.
+- **§5 targets table.** WISE 0855's row now shows its J2000 position (133.818908, −7.247047) rather
+  than the discovery coordinate, with the 86″ difference explained.
+- **§1.** Notes that archive counts drift, so quoted numbers come from the tool rather than the table.
+- **Phase 1, Phase 7, Phase 11, §7 checklist.** Corrected so they stop promising something
+  impossible: WISE 0855 ships as cube spectrum + RGB composite with a labelled non-detection, four
+  targets blink, and co-adds are described as worth √N rather than as the answer to an 8.7 mag gap.
 
 ### Verification
 
