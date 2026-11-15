@@ -46,6 +46,17 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     timeline.add_argument("--targets", default="data/targets.json")
     timeline.add_argument("--json", action="store_true", help="machine-readable output")
 
+    build = subparsers.add_parser("build", help="build one target's blink sequence")
+    build.add_argument("--target", required=True, metavar="SLUG")
+    build.add_argument("--band", help="override the band chosen by the date count")
+    build.add_argument("--size", type=float, default=0.3, help="cutout size in degrees")
+    build.add_argument("--collection", choices=("dr1", "qr3"), default="dr1")
+    build.add_argument("--workers", type=int, default=8)
+    build.add_argument("--out", default="data/fallback")
+    build.add_argument("--cache", default="data/cache")
+    build.add_argument("--targets", default="data/targets.json")
+    build.add_argument("--refresh", action="store_true", help="ignore cached FITS")
+
     return parser.parse_args(argv)
 
 
@@ -172,10 +183,91 @@ def run_timeline(args: argparse.Namespace) -> int:
     return EXIT_UNKNOWN if unknown else 0
 
 
+def run_build(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from pipeline.sequence import DownloadFailed, SequenceRequest, build_sequence
+
+    request = SequenceRequest(
+        slug=args.target,
+        collection=COLLECTIONS[args.collection][0],
+        band=args.band,
+        size_deg=args.size,
+        out_root=Path(args.out),
+        cache_dir=Path(args.cache),
+        workers=args.workers,
+        refresh=args.refresh,
+        targets_path=args.targets,
+    )
+
+    def progress(message: str) -> None:
+        print(message, file=sys.stderr, flush=True)
+
+    try:
+        manifest = build_sequence(request, progress=progress)
+    except KeyError as error:
+        print(f"unknown target slug: {error}", file=sys.stderr)
+        return EXIT_USAGE
+    except (ArchiveUnknown, DownloadFailed) as error:
+        print(f"archive did not answer: {error}", file=sys.stderr)
+        return EXIT_UNKNOWN
+    except ValueError as error:
+        print(f"cannot build: {error}", file=sys.stderr)
+        return EXIT_USAGE
+
+    print_manifest(manifest)
+    return 0
+
+
+def print_manifest(manifest: dict) -> None:
+    rows = [
+        (
+            frame["date"],
+            frame["frames_available"],
+            f"{frame['flux']:.4f}",
+            "–" if frame["snr"] is None else f"{frame['snr']:.1f}",
+            f"{frame['bad_fraction']:.4f}",
+            "yes" if frame["saturated"] else "no",
+            f"{frame['bytes'] / 1024:.1f}",
+        )
+        for frame in manifest["frames"]
+    ]
+    print(
+        format_table(
+            rows,
+            ("date", "frames", "flux (mJy)", "snr", "bad_frac", "saturated", "webp KB"),
+        )
+    )
+    print(
+        f"\n{manifest['target']} {manifest['band']} — {manifest['n_frames']} dates, "
+        f"one stretch vmin={manifest['vmin']:.3f} vmax={manifest['vmax']:.3f}"
+    )
+    print(
+        f"moved {manifest['dx_arcsec']:+.2f} ± {manifest['dx_err_arcsec']:.2f} arcsec in RA, "
+        f"{manifest['dy_arcsec']:+.2f} ± {manifest['dy_err_arcsec']:.2f} in Dec "
+        f"over {manifest['dt_years']:.2f} years"
+    )
+    if manifest.get("saturated_any"):
+        print(
+            "note: the target core is saturated in at least one frame, so flux is a lower bound "
+            "and snr is not reported"
+        )
+    if not manifest.get("motion_reliable", True):
+        print(
+            "note: motion is not reliable for this sequence — a saturated core's centroid drifts "
+            "with the roll angle of each visit"
+        )
+    oversized = [frame["date"] for frame in manifest["frames"] if frame["bytes"] > 60_000]
+    if oversized:
+        print(f"warning: over 60 KB: {oversized}")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.command == "timeline":
         return run_timeline(args)
+    if args.command == "build":
+        return run_build(args)
     return EXIT_USAGE
 
 

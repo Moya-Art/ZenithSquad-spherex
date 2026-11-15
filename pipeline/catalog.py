@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import http.client
 import json
+import math
 import time
 import urllib.error
 import urllib.parse
@@ -113,6 +114,32 @@ class Summary:
 
 def load_targets(path: str | Path = "data/targets.json") -> list[dict]:
     return json.loads(Path(path).read_text())["targets"]
+
+
+def propagate(
+    ra: float,
+    dec: float,
+    pm_ra_cosdec: float | None,
+    pm_dec: float | None,
+    epoch_year: float | None,
+    epoch_year_start: float = 2000.0,
+) -> tuple[float, float]:
+    """Move a J2000 position to the exposure epoch with constant proper motion.
+
+    First order is enough here: the largest motion among these targets is 0.077 deg (Barnard's
+    Star), where the neglected second-order term is well under an arcsecond.
+
+    Every coordinate in the plan is J2000 and every frame is 2025-2026, so this runs before a
+    position is used to point at anything. Reading the raw J2000 pixel gives empty sky for
+    Barnard's Star and Epsilon Indi.
+    """
+    if pm_ra_cosdec is None or pm_dec is None or epoch_year is None:
+        return ra, dec
+
+    years = epoch_year - epoch_year_start
+    ra_out = ra + years * pm_ra_cosdec / 3.6e6 / math.cos(math.radians(dec))
+    dec_out = dec + years * pm_dec / 3.6e6
+    return ra_out, dec_out
 
 
 def sia_url(ra: float, dec: float, collection: str, radius_deg: float) -> str:
