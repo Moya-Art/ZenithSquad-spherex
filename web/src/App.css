@@ -641,6 +641,28 @@
   line-height: 1.55;
 }
 
+.notice-elapsed {
+  margin-top: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.notice-action {
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.notice-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 /* ---------- narrow: the inspector becomes a band under the plate ---------- */
 
 @media (max-width: 1080px) {

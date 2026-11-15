@@ -130,19 +130,23 @@ export async function loadTargets(): Promise<Target[]> {
  * failure. Anything else — the API down, a 503 from IRSA — falls back to the committed file.
  */
 export async function loadSequence(slug: string, band: string): Promise<Sequence | null> {
+  let apiError: unknown = null
   try {
     const query = new URLSearchParams({ target: slug, band })
     return await getJson<Sequence>(`${API}/frames?${query.toString()}`)
   } catch (error) {
     const status = error instanceof ApiError ? error.status : null
     if (status === 404 || status === 422) return null
+    apiError = error
   }
 
   try {
     return await getJson<Sequence>(`${BASE}data/fallback/sequence/${slug}_${band}.json`)
   } catch (error) {
     const status = error instanceof ApiError ? error.status : null
-    if (status === 404) return null
+    // No committed copy either. The API failure is the real story: reporting "no sequence yet"
+    // here would blame a missing file for an archive that did not answer.
+    if (status === 404) throw apiError ?? error
     throw error
   }
 }
