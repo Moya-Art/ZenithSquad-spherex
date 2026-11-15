@@ -36,6 +36,11 @@ def frame_key(obs_id: str, ra: float, dec: float, size_deg: float) -> str:
     return _digest(f"{obs_id}:{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
 
 
+def cube_key(ra: float, dec: float, size_deg: float) -> str:
+    """No band: a cube is the whole spectrum at one position, which is the point of it."""
+    return _digest(f"{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
+
+
 class Cache:
     """A directory of sequences and single frames. No expiry: an `obs_id` never changes."""
 
@@ -72,6 +77,38 @@ class Cache:
 
     def put_frame(self, key: str, data: bytes) -> None:
         self._write(self.root / "frames" / f"{key}.webp", data)
+
+    # --- cubes ---------------------------------------------------------------------------------
+
+    def cube_dir(self, key: str) -> Path:
+        """Where `build_cube` writes this cube (`out_root`)."""
+        return self.root / "cubes" / key
+
+    def cube_manifest(self, key: str) -> dict | None:
+        try:
+            return json.loads((self.cube_dir(key) / "cube.json").read_text())
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+    def put_cube_manifest(self, key: str, manifest: dict) -> None:
+        self._write(self.cube_dir(key) / "cube.json", json.dumps(manifest).encode("utf-8"))
+
+    def cube_file(self, key: str, filename: str) -> Path:
+        # `build_cube` appends `/cube` to the root it is given.
+        return self.cube_dir(key) / "cube" / filename
+
+    def progress(self, key: str) -> dict | None:
+        """The job registry. It lives on disk so any instance can answer for a build started on
+        another one, and so a restart does not lose a finished result."""
+        try:
+            return json.loads((self.cube_dir(key) / "progress.json").read_text())
+        except (FileNotFoundError, json.JSONDecodeError):
+            return None
+
+    def put_progress(self, key: str, progress: dict) -> None:
+        self._write(
+            self.cube_dir(key) / "progress.json", json.dumps(progress).encode("utf-8")
+        )
 
     # --- health --------------------------------------------------------------------------------
 

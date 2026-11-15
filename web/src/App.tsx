@@ -4,14 +4,25 @@ import './tokens.css'
 import './App.css'
 
 import { BlinkStage } from './BlinkStage'
+import { CubeView } from './CubeView'
 import { Inspector } from './Inspector'
 import { LoadingNotice } from './LoadingNotice'
 import { PlateContext } from './PlateContext'
 import { Timeline } from './Timeline'
-import { frameUrl, loadSequence, loadTargets, type Sequence, type Target } from './data'
+import { COLORMAPS, type Colormap } from './colormaps'
+import {
+  frameUrl,
+  loadCube,
+  loadSequence,
+  loadTargets,
+  type Cube,
+  type Sequence,
+  type Target,
+} from './data'
 import { readViewState, writeViewState } from './viewState'
 
 const BANDS = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6']
+const CUBE_POLL_MS = 2000
 
 export default function App() {
   const initial = useMemo(() => readViewState(), [])
@@ -28,6 +39,16 @@ export default function App() {
   const [framesReady, setFramesReady] = useState(false)
   const [attempt, setAttempt] = useState(0)
   const epochPending = useRef(true)
+
+  const [mode, setMode] = useState<'time' | 'cube'>(initial.mode)
+  const [plane, setPlane] = useState(initial.plane ?? 0)
+  const [colormap, setColormap] = useState<Colormap>(
+    () => COLORMAPS.find((entry) => entry.id === initial.cmap) ?? COLORMAPS[0],
+  )
+  const [cube, setCube] = useState<Cube | null>(null)
+  const [cubeState, setCubeState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [cubeError, setCubeError] = useState<string | null>(null)
+  const [cubeAttempt, setCubeAttempt] = useState(0)
 
 
   useEffect(() => {
@@ -76,11 +97,63 @@ export default function App() {
 
   const frame = sequence?.frames[index] ?? null
 
+  // Spectrum mode. A cold coordinate answers 202 with progress, so this polls the same URL until the
+  // cube is ready; no job id is needed because the coordinate is the job.
+  useEffect(() => {
+    if (mode !== 'cube' || !slug) return
+    let cancelled = false
+    let timer: number | undefined
+    setCube(null)
+    setCubeState('loading')
+    setCubeError(null)
+
+    const fetchOnce = async () => {
+      try {
+        const loaded = await loadCube({ target: slug, refresh: cubeAttempt > 0 })
+        if (cancelled) return
+        setCube(loaded)
+        setCubeState('idle')
+        if (loaded && (loaded.state === 'building' || loaded.state === 'queued')) {
+          timer = window.setTimeout(() => void fetchOnce(), CUBE_POLL_MS)
+        }
+      } catch (error) {
+        if (cancelled) return
+        setCubeState('error')
+        setCubeError(error instanceof Error ? error.message : String(error))
+      }
+    }
+
+    void fetchOnce()
+    return () => {
+      cancelled = true
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [mode, slug, cubeAttempt])
+
   // Keep the URL in step with the view.
   useEffect(() => {
+    if (mode === 'cube') {
+      const shareable = colormap.stops.length > 0 && !colormap.id.startsWith('random-')
+      writeViewState({
+        target: slug,
+        band: '',
+        epoch: null,
+        mode: 'cube',
+        plane,
+        cmap: shareable ? colormap.id : null,
+      })
+      return
+    }
     if (!frame) return
-    writeViewState({ target: slug, band: effectiveBand, epoch: frame.date })
-  }, [slug, effectiveBand, frame])
+    writeViewState({
+      target: slug,
+      band: effectiveBand,
+      epoch: frame.date,
+      mode: 'time',
+      plane: null,
+      cmap: null,
+    })
+  }, [slug, effectiveBand, frame, mode, plane, colormap])
 
   const sources = useMemo(
     () => (sequence ? sequence.frames.map((f) => frameUrl(f)) : []),
@@ -100,9 +173,11 @@ export default function App() {
     [sequence],
   )
 
-  // Transport keys. Space is play/pause; arrows step one epoch.
+  // Transport keys. Space is play/pause; arrows step one epoch. In spectrum mode the plane scrubber
+  // owns the arrows, so this map stands down rather than stepping a timeline nobody can see.
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (mode !== 'time') return
       const tag = (event.target as HTMLElement | null)?.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA') return
 
@@ -119,7 +194,7 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [step])
+  }, [step, mode])
 
   return (
     <div className="app">
@@ -141,23 +216,39 @@ export default function App() {
           </div>
         )}
 
-        <div className="bands" role="group" aria-label="infrared band">
-          {BANDS.map((b) => (
+        <div className="modes" role="group" aria-label="view mode">
+          {(['time', 'cube'] as const).map((value) => (
             <button
-              key={b}
+              key={value}
               type="button"
-              className={`band ${b === effectiveBand ? 'is-active' : ''}`}
-              onClick={() => {
-                setBand(b)
-                setIndex(0)
-                setPlaying(false)
-              }}
-              aria-pressed={b === effectiveBand}
+              className={`mode ${mode === value ? 'is-active' : ''}`}
+              onClick={() => setMode(value)}
+              aria-pressed={mode === value}
             >
-              {b}
+              {value === 'time' ? 'Time' : 'Spectrum'}
             </button>
           ))}
         </div>
+
+        {mode === 'time' && (
+          <div className="bands" role="group" aria-label="infrared band">
+            {BANDS.map((b) => (
+              <button
+                key={b}
+                type="button"
+                className={`band ${b === effectiveBand ? 'is-active' : ''}`}
+                onClick={() => {
+                  setBand(b)
+                  setIndex(0)
+                  setPlaying(false)
+                }}
+                aria-pressed={b === effectiveBand}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        )}
       </header>
 
       <div className="body">
@@ -184,7 +275,40 @@ export default function App() {
         </nav>
 
         <main className="main">
-          {sequenceState === 'missing' && target && (
+          {mode === 'cube' && (
+            <div className="cube-wrap">
+              {cubeState === 'loading' && !cube && (
+                <LoadingNotice targetName={target?.name ?? null} />
+              )}
+
+              {cubeState === 'error' && (
+                <div className="notice notice--bad">
+                  <div className="notice-title">Could not load this cube</div>
+                  <div className="notice-body mono">{cubeError}</div>
+                  <button
+                    type="button"
+                    className="notice-action"
+                    onClick={() => setCubeAttempt((current) => current + 1)}
+                  >
+                    Try again
+                  </button>
+                </div>
+              )}
+
+              {cube && (
+                <CubeView
+                  cube={cube}
+                  plane={plane}
+                  onPlane={setPlane}
+                  colormap={colormap}
+                  onColormap={setColormap}
+                  onRetry={() => setCubeAttempt((current) => current + 1)}
+                />
+              )}
+            </div>
+          )}
+
+          {mode === 'time' && sequenceState === 'missing' && target && (
             <div className="notice">
               <div className="notice-title">
                 No {effectiveBand} frames for {target.name}.
@@ -196,7 +320,7 @@ export default function App() {
             </div>
           )}
 
-          {sequenceState === 'error' && (
+          {mode === 'time' && sequenceState === 'error' && (
             <div className="notice notice--bad">
               <div className="notice-title">Could not load this patch of sky</div>
               <div className="notice-body mono">{sequenceError}</div>
@@ -214,9 +338,11 @@ export default function App() {
             </div>
           )}
 
-          {sequenceState === 'loading' && <LoadingNotice targetName={target?.name ?? null} />}
+          {mode === 'time' && sequenceState === 'loading' && (
+            <LoadingNotice targetName={target?.name ?? null} />
+          )}
 
-          {sequence && frame && target && (
+          {mode === 'time' && sequence && frame && target && (
             <div className="workbench">
               <div className="plate">
                 <div className="plate-head">
@@ -284,7 +410,7 @@ export default function App() {
         </main>
       </div>
 
-      {sequence && (
+      {mode === 'time' && sequence && (
         <Timeline
           frames={sequence.frames}
           index={index}

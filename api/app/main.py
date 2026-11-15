@@ -26,10 +26,11 @@ from pipeline import catalog
 
 from api.app import service
 
-APP_VERSION = "0.5.0"
+APP_VERSION = "0.6.0"
 
 MANIFEST_MAX_AGE = 3600
 FRAME_MAX_AGE = service.IMMUTABLE_SECONDS
+BUILD_POLL_SECONDS = 2
 
 CORS_ORIGINS = [
     origin.strip()
@@ -63,6 +64,23 @@ SIZE_DESCRIPTION = "Field size, degrees"
 BAND_PATTERN = r"^D[1-6]$"
 BAND_DESCRIPTION = "Detector band, D1–D6"
 SIZE_MIN, SIZE_MAX = 0.0, 2.0
+
+
+def _resolve_position(
+    target: str | None, ra: float | None, dec: float | None
+) -> tuple[float, float]:
+    """A slug resolves through `targets.json`; a raw coordinate has to be given in full.
+
+    Rejecting a half-given coordinate here means the pipeline never builds a cube for Dec = None.
+    """
+    if target:
+        entry = service.find_target(target)
+        if entry is None:
+            raise HTTPException(404, f"unknown target {target!r}")
+        return float(entry["ra"]), float(entry["dec"])
+    if ra is None or dec is None:
+        raise HTTPException(422, "give either target=, or both ra= and dec=")
+    return ra, dec
 
 
 def _manifest_response(response: Response, manifest: dict, state: str) -> dict:
@@ -160,18 +178,90 @@ def read_preview(
 
 @app.get("/cube")
 def read_cube(
-    ra: float = Query(ge=0.0, lt=360.0, description=RA_DESCRIPTION),
-    dec: float = Query(ge=-90.0, le=90.0, description=DEC_DESCRIPTION),
+    response: Response,
+    target: str | None = Query(default=None, pattern=r"^[a-z0-9_]+$"),
+    ra: float | None = Query(default=None, ge=0.0, lt=360.0, description=RA_DESCRIPTION),
+    dec: float | None = Query(default=None, ge=-90.0, le=90.0, description=DEC_DESCRIPTION),
     size: float = Query(default=service.DEFAULT_SIZE_DEG, gt=SIZE_MIN, le=SIZE_MAX),
-) -> Response:
-    """Registered, not served: the 102 planes and the spectrum are Phase 6's `pipeline/cube.py`."""
-    raise HTTPException(
-        501,
-        detail=(
-            "the 102-band cube is not served yet: it arrives with pipeline/cube.py in Phase 6. "
-            "Time mode is live at /frames."
-        ),
+    refresh: bool = Query(default=False),
+) -> dict:
+    """The 102 planes, the spectrum and the composite for one patch of sky.
+
+    Built cubes answer `200` at once. A patch nobody has looked at answers `202` with what the build
+    is doing, an ETA and whatever planes already exist — never a request that blocks on a 306 MiB tile
+    download. Poll the same URL; no job id is needed because the coordinate *is* the job.
+    """
+    ra_value, dec_value = _resolve_position(target, ra, dec)
+    payload, state = service.cube_state(
+        ra_value, dec_value, target=target, size_deg=size, refresh=refresh
     )
+
+    if state == "building":
+        response.headers["X-Cache"] = "miss"
+        response.headers["Retry-After"] = str(BUILD_POLL_SECONDS)
+        response.headers["Cache-Control"] = "no-store"
+        response.status_code = 202
+        return payload
+
+    response.headers["X-Cache"] = state
+    response.headers["Cache-Control"] = (
+        "no-store" if state == "failed" else f"public, max-age={MANIFEST_MAX_AGE}"
+    )
+    return payload
+
+
+@app.get("/cube/plane")
+def read_cube_plane(
+    plane: int = Query(ge=0, le=1023),
+    target: str | None = Query(default=None, pattern=r"^[a-z0-9_]+$"),
+    ra: float | None = Query(default=None, ge=0.0, lt=360.0, description=RA_DESCRIPTION),
+    dec: float | None = Query(default=None, ge=-90.0, le=90.0, description=DEC_DESCRIPTION),
+    size: float = Query(default=service.DEFAULT_SIZE_DEG, gt=SIZE_MIN, le=SIZE_MAX),
+    if_none_match: str | None = Header(default=None),
+) -> Response:
+    """One wavelength plane, greyscale, as WebP. The colormap is applied in the browser, so this
+    response is the same bytes whatever palette is showing."""
+    ra_value, dec_value = _resolve_position(target, ra, dec)
+    try:
+        data, state = service.cube_plane_webp(plane, ra_value, dec_value, size, target)
+    except service.CubeNotReady as error:
+        raise HTTPException(404, str(error)) from error
+
+    digest = hashlib.sha1(data).hexdigest()
+    headers = {
+        "X-Cache": state,
+        "Cache-Control": f"public, max-age={FRAME_MAX_AGE}, immutable",
+        "ETag": f'"{digest}"',
+    }
+    if if_none_match is not None and digest in if_none_match:
+        return Response(status_code=304, headers=headers)
+    return Response(content=data, media_type="image/webp", headers=headers)
+
+
+@app.get("/cube/composite")
+def read_cube_composite(
+    target: str | None = Query(default=None, pattern=r"^[a-z0-9_]+$"),
+    ra: float | None = Query(default=None, ge=0.0, lt=360.0, description=RA_DESCRIPTION),
+    dec: float | None = Query(default=None, ge=-90.0, le=90.0, description=DEC_DESCRIPTION),
+    size: float = Query(default=service.DEFAULT_SIZE_DEG, gt=SIZE_MIN, le=SIZE_MAX),
+    if_none_match: str | None = Header(default=None),
+) -> Response:
+    """The RGB composite, which is the only colour image the server renders."""
+    ra_value, dec_value = _resolve_position(target, ra, dec)
+    try:
+        data, state = service.cube_composite_webp(ra_value, dec_value, size, target)
+    except service.CubeNotReady as error:
+        raise HTTPException(404, str(error)) from error
+
+    digest = hashlib.sha1(data).hexdigest()
+    headers = {
+        "X-Cache": state,
+        "Cache-Control": f"public, max-age={FRAME_MAX_AGE}, immutable",
+        "ETag": f'"{digest}"',
+    }
+    if if_none_match is not None and digest in if_none_match:
+        return Response(status_code=304, headers=headers)
+    return Response(content=data, media_type="image/webp", headers=headers)
 
 
 @app.get("/healthz")

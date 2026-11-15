@@ -57,6 +57,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     build.add_argument("--targets", default="data/targets.json")
     build.add_argument("--refresh", action="store_true", help="ignore cached FITS")
 
+    cube = subparsers.add_parser("cube", help="build one target's 102-plane spectrum cube")
+    cube.add_argument("--target", metavar="SLUG", help="a slug from targets.json")
+    cube.add_argument("--ra", type=float, help="right ascension in degrees, instead of --target")
+    cube.add_argument("--dec", type=float, help="declination in degrees, instead of --target")
+    cube.add_argument("--size", type=float, default=0.3, help="field in degrees (min window 160 px)")
+    cube.add_argument("--out", default="data/fallback")
+    cube.add_argument("--cache", default="data/cache")
+    cube.add_argument("--tiles", default="data/cache/cube_tiles", help="where cube tiles are kept")
+    cube.add_argument("--version", help="pin a HiPS release instead of discovering the newest")
+    cube.add_argument("--targets", default="data/targets.json")
+    cube.add_argument("--refresh", action="store_true", help="re-download the tile")
+
     return parser.parse_args(argv)
 
 
@@ -279,12 +291,131 @@ def print_manifest(manifest: dict) -> None:
         print(f"warning: over 60 KB: {oversized}")
 
 
+def run_cube(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from pipeline.catalog import SchemaError
+    from pipeline.cube import CubeRequest, TileUnavailable, build_cube
+    from pipeline.sequence import PositionSpec
+
+    if args.target:
+        record = next(
+            (item for item in load_targets(args.targets) if item["slug"] == args.target), None
+        )
+        if record is None:
+            print(f"unknown target slug: {args.target!r}", file=sys.stderr)
+            return EXIT_USAGE
+        position = PositionSpec(
+            ra=record["ra"],
+            dec=record["dec"],
+            label=record["slug"],
+            name=record.get("name", record["slug"]),
+            pm_ra_cosdec=record.get("pm_ra_cosdec"),
+            pm_dec=record.get("pm_dec"),
+        )
+    elif args.ra is not None and args.dec is not None:
+        position = PositionSpec(
+            ra=args.ra,
+            dec=args.dec,
+            label=f"ra{args.ra:.4f}_dec{args.dec:.4f}",
+            name=f"RA {args.ra:.4f}, Dec {args.dec:+.4f}",
+        )
+    else:
+        print("give --target, or both --ra and --dec", file=sys.stderr)
+        return EXIT_USAGE
+
+    request = CubeRequest(
+        position=position,
+        size_deg=args.size,
+        out_root=Path(args.out),
+        cache_dir=Path(args.cache),
+        tile_cache_dir=Path(args.tiles),
+        version=args.version,
+        refresh=args.refresh,
+    )
+
+    def progress(update: dict) -> None:
+        done = update.get("planes_done")
+        total = update.get("planes_total")
+        message = update.get("message") or update.get("stage", "")
+        if done and total:
+            print(f"{done:3d}/{total}  {message}", file=sys.stderr, flush=True)
+        else:
+            print(message, file=sys.stderr, flush=True)
+
+    try:
+        manifest = build_cube(request, progress=progress)
+    except (ArchiveUnknown, SchemaError, TileUnavailable) as error:
+        print(f"archive did not answer: {error}", file=sys.stderr)
+        return EXIT_UNKNOWN
+    except (KeyError, ValueError) as error:
+        print(f"cannot build: {error}", file=sys.stderr)
+        return EXIT_USAGE
+
+    print_cube(manifest)
+    return 0
+
+
+def print_cube(manifest: dict) -> None:
+    points = {point["index"]: point for point in manifest["spectrum"]["points"]}
+    rows = []
+    for plane in manifest["planes"]:
+        point = points.get(plane["index"], {})
+        flux = point.get("flux_mjy")
+        rows.append(
+            (
+                plane["index"],
+                plane["band"],
+                plane["channel"],
+                f"{plane['wavelength_um']:.3f}",
+                f"{plane['bandwidth_um']:.3f}",
+                "blank" if plane["blank"] else f"{plane['coverage']:.2f}",
+                plane["nan_pixels"],
+                "—" if flux is None else f"{flux:.4f}",
+                f"{plane['bytes'] / 1024:.1f}",
+            )
+        )
+    print(
+        format_table(
+            rows,
+            ("idx", "band", "ch", "um", "width", "cover", "nan", "flux (mJy)", "webp KB"),
+        )
+    )
+
+    composite = manifest["composite"]
+    named = ", ".join(
+        f"{channel['channel']} {channel['wavelength_um']:.2f} um ({channel['band']})"
+        for channel in composite["channels"]
+    )
+    spectrum = manifest["spectrum"]
+    peak = spectrum.get("peak_index")
+    peak_flux = "—" if peak is None else f"{points[peak]['flux_mjy']:.4f}"
+    print(
+        f"\n{manifest['target']} — {manifest['depth']} planes, "
+        f"{manifest['crop_px']}x{manifest['crop_px']} px "
+        f"({manifest['crop_arcmin']:.1f} arcmin) at {manifest['pixscale_arcsec']:.2f} arcsec/px"
+    )
+    print(
+        f"one asinh stretch for all planes: vmin={manifest['stretch']['vmin']:.4f} "
+        f"vmax={manifest['stretch']['vmax']:.4f} MJy/sr"
+    )
+    print(f"tile {manifest['tile']['version']} Npix{manifest['tile']['ipix']} "
+          f"({manifest['tile']['bytes']:,} B), mosaic epoch "
+          f"{manifest['tile']['mosaic_epoch']:.2f}")
+    print(f"composite: {named} ({composite['bytes'] / 1024:.1f} KB)")
+    print(f"spectrum peak: {peak_flux} mJy at plane {peak}")
+    if manifest["blank_planes"]:
+        print(f"blank planes: {manifest['blank_planes']} (dichroic channels, no data by design)")
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.command == "timeline":
         return run_timeline(args)
     if args.command == "build":
         return run_build(args)
+    if args.command == "cube":
+        return run_cube(args)
     return EXIT_USAGE
 
 

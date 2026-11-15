@@ -43,6 +43,20 @@ python -m uvicorn api.app.main:app --port 8000
 `/preview` serves one frame as WebP. The dev frontend proxies `/api` here, so running both halves
 needs no configuration. A production frontend sets `VITE_API_URL`, and the API reads `CORS_ORIGINS`.
 
+## Spectrum mode
+
+`?mode=cube` shows one patch of sky as all 102 SPHEREx wavelengths, with a quick-look spectrum and a
+false-colour composite of three of those planes. It reads the DR1 all-sky HiPS cube, whose tiles are
+306 MiB and are downloaded once per release:
+
+```bash
+python -m pipeline.cli cube --target r_dra      # writes data/fallback/cube/
+```
+
+`/cube` serves a committed artifact at once, and answers `202` with build progress for a coordinate
+nobody has looked at yet. Spectra extracted from this cube are **visualization grade** — for science
+numbers use the [IRSA SPHEREx Spectrophotometry tool](https://irsa.ipac.caltech.edu/applications/spherex/tool-spectrophotometry).
+
 ## Run the web half
 
 ```bash
