@@ -16,7 +16,8 @@ import type { Motion, Sequence, Target } from './data'
 type Props = {
   target: Target
   sequence: Sequence
-  motion?: Motion
+  /** null when fewer than two frames could be measured, which a live build can return. */
+  motion?: Motion | null
 }
 
 function properMotionMagnitude(target: Target): number {
@@ -92,7 +93,17 @@ export function PlateContext({ target, sequence, motion }: Props) {
         <div className="context-motion">
           <div className="context-label">Centroid motion</div>
 
-          {motion.significant ? (
+          {motion.reliable === false ? (
+            <>
+              <div className="context-verdict">not measurable</div>
+              <div className="context-note">
+                The first and last centroids differ by {motion.total_arcsec.toFixed(1)}″, but the
+                fit is flagged unreliable: a saturated core drifts with the roll angle of each
+                visit, so this is not a motion measurement. The catalogue proper motion is the
+                number to trust here.
+              </div>
+            </>
+          ) : motion.significant ? (
             <>
               <div className="context-verdict is-real">
                 moved {motion.total_arcsec.toFixed(1)}″ over {motion.dt_years.toFixed(2)} yr

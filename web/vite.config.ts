@@ -59,6 +59,17 @@ function repoData(): Plugin {
 
 export default defineConfig({
   plugins: [react(), repoData()],
+  server: {
+    // Phase 5: the app asks for /api/*, and in dev that is the FastAPI process on :8000. Proxying
+    // keeps dev same-origin, so no CORS and no env var is needed to run both halves together.
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_PROXY ?? 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
