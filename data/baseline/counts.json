@@ -1,0 +1,323 @@
+{
+  "measured": "2026-11-15",
+  "source": "python3 scripts/verify_counts.py --update",
+  "targets": {
+    "barnard": {
+      "spherex_dr1": {
+        "bands": {
+          "D1": {
+            "dates": 10,
+            "frames": 42
+          },
+          "D2": {
+            "dates": 10,
+            "frames": 38
+          },
+          "D3": {
+            "dates": 14,
+            "frames": 41
+          },
+          "D4": {
+            "dates": 10,
+            "frames": 41
+          },
+          "D5": {
+            "dates": 10,
+            "frames": 38
+          },
+          "D6": {
+            "dates": 14,
+            "frames": 40
+          }
+        },
+        "dates": 26,
+        "first": "2025-08-15",
+        "frames": 240,
+        "last": "2026-05-05",
+        "obs": 121,
+        "radius_deg": 0.001
+      },
+      "spherex_qr3": {
+        "bands": {
+          "D1": {
+            "dates": 6,
+            "frames": 18
+          },
+          "D2": {
+            "dates": 6,
+            "frames": 24
+          },
+          "D3": {
+            "dates": 6,
+            "frames": 19
+          },
+          "D4": {
+            "dates": 6,
+            "frames": 19
+          },
+          "D5": {
+            "dates": 6,
+            "frames": 24
+          },
+          "D6": {
+            "dates": 6,
+            "frames": 19
+          }
+        },
+        "dates": 15,
+        "first": "2026-08-16",
+        "frames": 123,
+        "last": "2026-09-22",
+        "obs": 62,
+        "radius_deg": 0.001
+      }
+    },
+    "eps_ind": {
+      "spherex_dr1": {
+        "bands": {
+          "D1": {
+            "dates": 18,
+            "frames": 48
+          },
+          "D2": {
+            "dates": 18,
+            "frames": 67
+          },
+          "D3": {
+            "dates": 18,
+            "frames": 64
+          },
+          "D4": {
+            "dates": 18,
+            "frames": 46
+          },
+          "D5": {
+            "dates": 17,
+            "frames": 58
+          },
+          "D6": {
+            "dates": 18,
+            "frames": 61
+          }
+        },
+        "dates": 50,
+        "first": "2025-04-24",
+        "frames": 344,
+        "last": "2026-05-04",
+        "obs": 180,
+        "radius_deg": 0.001
+      },
+      "spherex_qr3": {
+        "bands": {
+          "D2": {
+            "dates": 5,
+            "frames": 23
+          },
+          "D3": {
+            "dates": 6,
+            "frames": 35
+          },
+          "D5": {
+            "dates": 5,
+            "frames": 23
+          },
+          "D6": {
+            "dates": 6,
+            "frames": 35
+          }
+        },
+        "dates": 10,
+        "first": "2026-09-22",
+        "frames": 116,
+        "last": "2026-10-02",
+        "obs": 58,
+        "radius_deg": 0.001
+      }
+    },
+    "r_dra": {
+      "spherex_dr1": {
+        "bands": {
+          "D1": {
+            "dates": 21,
+            "frames": 67
+          },
+          "D2": {
+            "dates": 19,
+            "frames": 70
+          },
+          "D3": {
+            "dates": 20,
+            "frames": 71
+          },
+          "D4": {
+            "dates": 21,
+            "frames": 65
+          },
+          "D5": {
+            "dates": 19,
+            "frames": 70
+          },
+          "D6": {
+            "dates": 20,
+            "frames": 70
+          }
+        },
+        "dates": 59,
+        "first": "2025-05-16",
+        "frames": 413,
+        "last": "2026-05-13",
+        "obs": 209,
+        "radius_deg": 0.001
+      },
+      "spherex_qr3": {
+        "bands": {
+          "D1": {
+            "dates": 8,
+            "frames": 24
+          },
+          "D2": {
+            "dates": 3,
+            "frames": 19
+          },
+          "D3": {
+            "dates": 7,
+            "frames": 20
+          },
+          "D4": {
+            "dates": 8,
+            "frames": 23
+          },
+          "D5": {
+            "dates": 3,
+            "frames": 19
+          },
+          "D6": {
+            "dates": 7,
+            "frames": 21
+          }
+        },
+        "dates": 18,
+        "first": "2026-05-16",
+        "frames": 126,
+        "last": "2026-07-16",
+        "obs": 64,
+        "radius_deg": 0.001
+      }
+    },
+    "rw_aur": {
+      "spherex_dr1": {
+        "bands": {
+          "D1": {
+            "dates": 9,
+            "frames": 38
+          },
+          "D2": {
+            "dates": 8,
+            "frames": 37
+          },
+          "D3": {
+            "dates": 10,
+            "frames": 38
+          },
+          "D4": {
+            "dates": 9,
+            "frames": 38
+          },
+          "D5": {
+            "dates": 8,
+            "frames": 37
+          },
+          "D6": {
+            "dates": 10,
+            "frames": 38
+          }
+        },
+        "dates": 25,
+        "first": "2025-09-01",
+        "frames": 226,
+        "last": "2026-03-12",
+        "obs": 113,
+        "radius_deg": 0.001
+      },
+      "spherex_qr3": {
+        "bands": {
+          "D1": {
+            "dates": 3,
+            "frames": 18
+          },
+          "D2": {
+            "dates": 6,
+            "frames": 18
+          },
+          "D3": {
+            "dates": 4,
+            "frames": 18
+          },
+          "D4": {
+            "dates": 3,
+            "frames": 18
+          },
+          "D5": {
+            "dates": 6,
+            "frames": 19
+          },
+          "D6": {
+            "dates": 4,
+            "frames": 18
+          }
+        },
+        "dates": 10,
+        "first": "2026-09-02",
+        "frames": 109,
+        "last": "2026-09-16",
+        "obs": 55,
+        "radius_deg": 0.001
+      }
+    },
+    "wise0855": {
+      "spherex_dr1": {
+        "bands": {
+          "D1": {
+            "dates": 9,
+            "frames": 38
+          },
+          "D2": {
+            "dates": 14,
+            "frames": 48
+          },
+          "D3": {
+            "dates": 13,
+            "frames": 45
+          },
+          "D4": {
+            "dates": 9,
+            "frames": 37
+          },
+          "D5": {
+            "dates": 14,
+            "frames": 48
+          },
+          "D6": {
+            "dates": 13,
+            "frames": 45
+          }
+        },
+        "dates": 28,
+        "first": "2025-05-05",
+        "frames": 261,
+        "last": "2026-05-14",
+        "obs": 131,
+        "radius_deg": 0.001
+      },
+      "spherex_qr3": {
+        "bands": {},
+        "dates": 0,
+        "first": null,
+        "frames": 0,
+        "last": null,
+        "obs": 0,
+        "radius_deg": 0.001
+      }
+    }
+  }
+}
