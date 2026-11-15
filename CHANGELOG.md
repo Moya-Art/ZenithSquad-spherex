@@ -124,6 +124,23 @@ Merged in [#9](https://github.com/Moya-Art/ZenithSquad-spherex/pull/9). Squash-m
 - In the browser at 1440×900: Barnard live (14 epochs, image rendered, panel reads "not measurable");
   R Draconis with the API stopped (20 committed epochs, still renders).
 
+### Fixed in review ([#10](https://github.com/Moya-Art/ZenithSquad-spherex/pull/10))
+
+Found by using the tool: a cold WISE 0855 load sat on "loading sequence…" with no explanation, and a
+failed build was reported as "no sequence committed yet".
+
+- **The wait now says what it is.** `web/src/LoadingNotice.tsx` names the work ("Building Epsilon
+  Indi B from the NASA archive"), explains that a first visit downloads one image per observing date
+  and renders them against a single stretch, and ticks an elapsed counter so a slow build is
+  distinguishable from a hang. The counter lives in its own component, so mounting resets it and no
+  effect writes state directly.
+- **A failure is reported as itself.** `loadSequence` used to fall back to the committed file and,
+  when that file did not exist either, return `null` — which the UI rendered as "no sequence
+  committed", blaming a missing file for an archive that never answered. The API's error now
+  surfaces with its status and a **Try again** button that re-issues the request.
+- **The "missing" message stopped talking about Phase 3.** It named R Draconis D6 as the only
+  sequence that existed, which stopped being true when the API landed.
+
 ### Notes for the next phase
 
 - Phase 6 replaces the `/cube` stub and nothing else: `pipeline/cube.py` is a new file, and the route

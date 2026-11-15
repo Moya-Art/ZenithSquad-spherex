@@ -5,6 +5,7 @@ import './App.css'
 
 import { BlinkStage } from './BlinkStage'
 import { Inspector } from './Inspector'
+import { LoadingNotice } from './LoadingNotice'
 import { PlateContext } from './PlateContext'
 import { Timeline } from './Timeline'
 import { frameUrl, loadSequence, loadTargets, type Sequence, type Target } from './data'
@@ -25,6 +26,7 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [framesReady, setFramesReady] = useState(false)
+  const [attempt, setAttempt] = useState(0)
   const epochPending = useRef(true)
 
 
@@ -70,7 +72,7 @@ export default function App() {
     return () => {
       cancelled = true
     }
-  }, [slug, effectiveBand, initial.epoch])
+  }, [slug, effectiveBand, initial.epoch, attempt])
 
   const frame = sequence?.frames[index] ?? null
 
@@ -184,22 +186,35 @@ export default function App() {
         <main className="main">
           {sequenceState === 'missing' && target && (
             <div className="notice">
-              <div className="notice-title">No sequence committed yet for {target.name}.</div>
+              <div className="notice-title">
+                No {effectiveBand} frames for {target.name}.
+              </div>
               <div className="notice-body">
-                Phase 3 builds one sequence per target. Only R Draconis in D6 has landed.
-                Try R Draconis, or another band once its sequence exists.
+                The archive has nothing at this coordinate in that band, and there is no committed
+                copy. Try another band, or another target.
               </div>
             </div>
           )}
 
           {sequenceState === 'error' && (
             <div className="notice notice--bad">
-              <div className="notice-title">Could not load sequence</div>
+              <div className="notice-title">Could not load this patch of sky</div>
               <div className="notice-body mono">{sequenceError}</div>
+              <div className="notice-body">
+                A first visit has to build the sequence from the archive, and IRSA drops requests
+                often enough that this does sometimes fail.
+              </div>
+              <button
+                type="button"
+                className="notice-action"
+                onClick={() => setAttempt((current) => current + 1)}
+              >
+                Try again
+              </button>
             </div>
           )}
 
-          {sequenceState === 'loading' && <div className="notice">loading sequence…</div>}
+          {sequenceState === 'loading' && <LoadingNotice targetName={target?.name ?? null} />}
 
           {sequence && frame && target && (
             <div className="workbench">
