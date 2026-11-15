@@ -13,7 +13,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 
 from pipeline.fits_io import Cutout, pixel_area_sr
-from pipeline.measure import measure_frame, sky_offset
+from pipeline.measure import TargetOutsideFrame, measure_frame, sky_offset
 
 SHAPE = (64, 64)
 TRUE_X, TRUE_Y = 30.4, 28.7
@@ -117,6 +117,15 @@ def test_a_wandering_centroid_falls_back_to_the_predicted_position():
     assert measurement.centroid_fallback is True
     assert measurement.x == pytest.approx(TRUE_X)
     assert measurement.y == pytest.approx(TRUE_Y)
+
+
+def test_a_target_past_the_clipped_edge_is_reported_not_indexed():
+    # IRSA clips a cutout at the detector edge, and an arbitrary coordinate can land past it. The
+    # frame is unmeasurable; indexing the flag array there used to raise IndexError 300 lines away.
+    cutout = make_cutout()
+
+    with pytest.raises(TargetOutsideFrame, match="outside the 64×64 cutout"):
+        measure_frame(cutout, (SHAPE[1] + 6.0, TRUE_Y), bad_bits=[], saturation_bits=[])
 
 
 def test_sky_offset_turns_a_pixel_shift_into_arcseconds():

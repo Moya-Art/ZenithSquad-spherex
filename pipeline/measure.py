@@ -35,6 +35,16 @@ SIGMA = 3.0
 MAX_ITERATIONS = 10
 
 
+class TargetOutsideFrame(ValueError):
+    """The predicted position is not on this cutout, so there is nothing to measure.
+
+    IRSA clips a cutout at the detector edge: 13 of R Draconis's 21 frames arrive 97×175 or 139×97
+    instead of 175×176, and for an arbitrary coordinate the target can sit past the returned edge
+    entirely. Indexing the flag array there raises IndexError deep inside numpy; this exception says
+    what actually happened, and the sequence records the frame with no measurement and a reason.
+    """
+
+
 @dataclass(frozen=True)
 class Measurement:
     x: float
@@ -82,6 +92,13 @@ def measure_frame(
         # the archive's astrometry predicts and say so.
         position = (float(target_xy[0]), float(target_xy[1]))
         fallback = True
+
+    height, width = image.shape
+    if not (0 <= position[0] < width and 0 <= position[1] < height):
+        raise TargetOutsideFrame(
+            f"predicted position x={target_xy[0]:.1f} y={target_xy[1]:.1f} is outside the "
+            f"{width}×{height} cutout the archive returned"
+        )
 
     yy, xx = np.ogrid[: image.shape[0], : image.shape[1]]
     radius = np.hypot(xx - position[0], yy - position[1])

@@ -241,20 +241,26 @@ def print_manifest(manifest: dict) -> None:
         )
     )
 
-    motion = manifest["motion"]
+    motion = manifest.get("motion")
     print(
         f"\n{manifest['target']} {manifest['band']} — {manifest['n_frames']} dates, "
         f"one stretch vmin={manifest['vmin']:.3f} vmax={manifest['vmax']:.3f}"
     )
-    print(
-        f"first-to-last {motion['total_arcsec']:.2f} arcsec over {motion['dt_years']:.2f} yr; "
-        f"fitted rate {motion['slope_arcsec_per_year'][0]:+.2f}, "
-        f"{motion['slope_arcsec_per_year'][1]:+.2f} arcsec/yr "
-        f"(scatter {motion['rms_scatter_arcsec'][0]:.2f}, "
-        f"{motion['rms_scatter_arcsec'][1]:.2f})"
-    )
-    print(f"significant: {'yes' if motion['significant'] else 'no'}; "
-          f"reliable: {'yes' if motion.get('reliable', True) else 'no'}")
+    if motion is None:
+        print(
+            "no motion: fewer than two frames could be measured "
+            "(the target fell outside clipped cutouts)"
+        )
+    else:
+        print(
+            f"first-to-last {motion['total_arcsec']:.2f} arcsec over {motion['dt_years']:.2f} yr; "
+            f"fitted rate {motion['slope_arcsec_per_year'][0]:+.2f}, "
+            f"{motion['slope_arcsec_per_year'][1]:+.2f} arcsec/yr "
+            f"(scatter {motion['rms_scatter_arcsec'][0]:.2f}, "
+            f"{motion['rms_scatter_arcsec'][1]:.2f})"
+        )
+        print(f"significant: {'yes' if motion['significant'] else 'no'}; "
+              f"reliable: {'yes' if motion.get('reliable', True) else 'no'}")
 
     if manifest.get("saturated_any"):
         print(

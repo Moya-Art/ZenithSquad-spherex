@@ -32,6 +32,17 @@ Check the stack imports:
 python -c "import numpy, astropy, astroquery, reproject, photutils, PIL, hpgeom; from google.cloud import storage; import fastapi, uvicorn, pytest; print('python ok')"
 ```
 
+## Run the API
+
+```bash
+source .venv/bin/activate
+python -m uvicorn api.app.main:app --port 8000
+```
+
+`/frames?ra=&dec=&band=` builds that coordinate's sequence from IRSA on first request and caches it;
+`/preview` serves one frame as WebP. The dev frontend proxies `/api` here, so running both halves
+needs no configuration. A production frontend sets `VITE_API_URL`, and the API reads `CORS_ORIGINS`.
+
 ## Run the web half
 
 ```bash
