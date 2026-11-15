@@ -23,6 +23,145 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 6 — Spectrum and colour (102 bands) — 2026-11-15
+
+Merged in [#12](https://github.com/Moya-Art/ZenithSquad-spherex/pull/12). Squash-merged onto `main`.
+
+### Added
+
+- `pipeline/cube.py` — the all-sky HiPS cube: version discovery from the S3 listing (never hardcoded),
+  `properties` parsing, tile download with byte-counted progress, a 160 × 160 crop, one pooled `asinh`
+  stretch for all 102 planes, one greyscale WebP per plane, the spectrum, and the RGB composite.
+  Reuses `render.global_stretch`/`save_webp`, `fits_io.check_bunit` and `catalog.propagate` rather than
+  growing a second copy of each.
+- `pipeline/cli.py cube` — `--target` or `--ra/--dec`, printing a row per plane as it completes and a
+  summary of stretch, composite wavelengths and spectrum peak. Same exit codes as `build`.
+- `api/app/main.py` — `/cube` is real (was a `501`), plus `/cube/plane` and `/cube/composite`.
+  `/cube?target=` serves a committed artifact; `/cube?ra=&dec=` answers `202` with build progress.
+- `api/app/service.py` — the cube build queue: one daemon worker, one job per cache key, progress on
+  disk, `updated_at` older than 120 s treated as a dead job and re-enqueued.
+- `api/app/cache.py` — `cube_key` (no band: a cube *is* the spectrum), `cubes/<key>/` with
+  `cube.json`, `progress.json` and the plane files.
+- `data/fallback/cube/` — R Draconis: 102 planes, the composite, and the manifest (740 KB total).
+- `web/src/colormaps.ts` — greyscale plus 10 palettes as anchor sets interpolated to 256 entries, and a
+  randomizer that walks lightness monotonically so a random ramp stays readable.
+- `web/src/CubeView.tsx` — plane stage, wavelength scrubber, palette thumbnails rendered from the
+  actual plane, composite with its three bands named, and the build progress strip.
+- `web/src/SpectrumChart.tsx` — hand-rolled SVG, one user unit per CSS pixel, with the notebook's
+  emission-line markers (Paβ, H⁻, Paα, Brγ, Brβ, PAH, Brα, CO) and nulls that break the line.
+- `tests/test_cube.py`, `tests/test_api_cube.py`, `tests/test_cube_artifact.py` — 36 tests, none
+  touching the network.
+
+### Changed
+
+- `web/src/App.tsx` gains a Time / Spectrum switch; the band switcher hides in spectrum mode, and the
+  global Space/←/→ map stands down so the plane scrubber owns the arrows.
+- `web/src/viewState.ts` gains `mode`, `plane` and `cmap`; `web/src/data.ts` gains the `Cube` types,
+  `loadCube` and the plane/composite URL helpers.
+- `tests/test_api_routes.py` — the two assertions that `/cube` answers `501` are replaced. The
+  no-FITS test now patches `service.cube_state`, because an unpatched `/cube` would start a real
+  306 MiB download inside the test suite.
+
+### Measured
+
+- Tile: **320 909 760 B (306 MiB)**, identical for every Norder-5 tile, downloaded in **72.6 s at
+  4.4 MB/s**. One tile covers 1.83°, so every coordinate inside it is free afterwards.
+- R Draconis: crop 160 × 160 px = 34.35′, stretch `asinh` `vmin = 0.005827` `vmax = 1.074214` MJy/sr,
+  102 planes at 3.4–9.4 KB each, composite 2.7 KB, **740 KB total**.
+- Spectrum: 666 mJy at 0.753 µm → **15 575 mJy at 4.988 µm**, peak at plane 101. Target 236× the field
+  at 0.753 µm and 8 169× at 4.988 µm.
+- Cold API build: `202` → byte progress (ETA 253 s → 86 s over nine polls) → rendering 102 planes in
+  about **4 s** from the cached tile → `200`, `X-Cache: hit`.
+- `pytest tests/ -q` → **113 passed** (77 + 36). `npm run build` → 256 kB / 80 kB gzipped.
+  `npm run lint` → 0 errors, 3 warnings (two pre-existing, one new effect that synchronises with a
+  poll).
+
+### Decisions
+
+- **One shared `asinh` stretch for all 102 planes.** A per-plane autoscale would make every band look
+  equally bright and flatten the spectrum, which is §4's fake-variability rule one axis over. Linear
+  is wrong too: the cube spans −1419 → +11348, so most planes would sit at the bottom of the ramp.
+  `asinh` is what IRSA renders these tiles with (`hips_pixel_function`).
+- **The composite stretches each channel on its own.** Tried both ways; a shared scale washed the
+  colour out. A composite is a false-colour image, not a brightness comparison.
+- **`local_pixel_scale`, never `proj_plane_pixel_scales`.** The projection says 13.983″/px where the
+  sky says 12.883″; an HPX pixel's solid angle is not constant.
+- **The colormap is a browser-side lookup table** over an already-downloaded greyscale plane, so 11
+  palettes cost one pass over a 160 × 160 buffer and no bytes.
+- **A cold coordinate is a job, not a request.** Rendering 102 planes is fast; the 306 MiB tile is not.
+  A blocking HTTP request would time out on the thing that actually takes the time.
+- **Committed artifacts answer first, then the cache, then the queue.** The five targets must never
+  wait in front of a judge.
+
+### Findings that changed the plan
+
+- **The dichroic planes are blank by design** — indices 50 and 51 (D3 ch 17, D4 ch 1) have zero
+  `NHITS` everywhere. They are flagged and indexed rather than dropped: dropping them would mislabel
+  every wavelength after them.
+- **`index = 17·(detector−1) + (subchan−1)` holds**, confirmed against `SPECTRAL_CHANNELS` for all 102
+  rows, so `DETECTOR`/`SUBCHAN` come from the table rather than from arithmetic.
+- **R Draconis sits 19.6 px from its tile edge**, so its 40–60 px annulus is ~61 % in-frame and 100 of
+  102 planes report `annulus_clipped`. This is the notebook's own documented behaviour; the flag is
+  per plane so a background estimate built from a partial ring is never silent.
+- **`measure.py` converts MJy → mJy with `× 1e3`, which is kJy.** Found while building the cube's own
+  conversion: astropy units give 5 417 mJy for plane 93, the same arithmetic with `1e3` gives 0.0054.
+  SNR is unaffected and no committed value is wrong today, because R Draconis saturates and every
+  `measure` in its manifest is `null`. **Open for Phase 7**, where an unsaturated target first makes
+  the number visible. Not changed here: it moves a Phase 3 rule and the plan did not ask for it.
+- **A windowed range read of the tile was abandoned** — `fsspec`'s HTTP filesystem needs `aiohttp`,
+  which is not installed, and one full download serves a whole 1.83° tile afterwards.
+
+### Plan changes
+
+- **§6 Phase 6 gains an asynchronous build path.** Was a synchronous route; now a queue with
+  `progress.json`, `202` + `Retry-After`, progressive planes, a shared cache and committed artifacts.
+  Proposed and approved before implementation, as a request from the team.
+- **§6 Phase 6 gains the colormap picker** (greyscale + 10 palettes + randomizer). Not in the brief;
+  adjacent to "think creatively about how to display those 102 infrared bands", and free because the
+  planes are greyscale and the palette is applied in the browser.
+- **`/cube` signature.** `ra`/`dec` are now optional in favour of `target=`, so a committed artifact
+  can be served without pretending to be a coordinate. `/frames` already takes both. A request with
+  neither is a `422` before it reaches the pipeline.
+- **§6 Phase 6 item 4 gains a stretch mode.** One pooled `asinh` stretch for the 102 planes, positive
+  pixels only, excluding a 12 px disc around the target. Item 6's independent per-channel stretch is
+  unchanged.
+- **§6 Phase 6 item 6 gains the channel order and the anchor wavelengths.** R = longest, B = shortest;
+  planes nearest 0.9, 2.3 and 4.7 µm chosen from the wavelengths array at build time.
+- **§5 repository tree gains** `data/fallback/cube/`, `web/src/CubeView.tsx`,
+  `web/src/SpectrumChart.tsx`, `web/src/colormaps.ts`, `tests/test_cube*.py`.
+- **§7 verification, cube-vs-time-mode flux** — recorded as documentation rather than a tolerance.
+  The cube is 12.883″/px with a 5 px aperture (64″); time mode is 6.15″/px with 3 px (18″); the mosaic
+  stacks every contributing exposure where a frame is one exposure. R Draconis cannot even provide the
+  comparison, because its time-mode measurement is null.
+
+### Verification
+
+- `pytest tests/ -q` → 113 passed, no network in any of them.
+- `npm run build` → clean (`tsc -b` included); `npm run lint` → 0 errors.
+- Live: `/cube?target=r_dra` → `200` `X-Cache: committed`, 102 planes, composite present;
+  `/cube?ra=90&dec=20` → `202` then `200` `X-Cache: hit`; `/cube/plane` → `image/webp` with an ETag
+  and `304` on `If-None-Match`; `/cube/plane?plane=101` → `404` while the build was still rendering;
+  `/cube` with no position → `422`; `?target=not_a_target` → `404`.
+- The build was watched end to end: queued → byte progress on the 306 MiB tile → planes 1, 30, 69,
+  102 arriving in the poll payload → ready, while nothing but the server was running.
+- Opened and looked at: planes at 0.75 / 2.29 / 4.70 µm, the blank plane 50, and the composite. The
+  first attempt had a black square in the core of the star — NaN at the saturated centre — which is
+  the fill rule in §4.5 of the phase note.
+
+### Notes for the next phase
+
+- Phase 7 builds the other four cubes with the same one-line command; only R Draconis is committed.
+  `data/fallback/cube/` is already copied into `dist`, and `.webp`/`.json` already have content types,
+  so nothing in `vite.config.ts` changes.
+- **WISE 0855's cube is the one that matters.** Its blink has no second season and no single-frame
+  detection; the cube is where it can appear at all.
+- The cold cube path on Cloud Run needs more than `--memory 2Gi`: `/tmp` is memory-backed and the tile
+  is 306 MiB. Phase 8 either raises the limit or moves cube builds into the Job.
+- `measure.py`'s mJy conversion (§ Findings) should be settled before an unsaturated target's flux is
+  shown to anyone.
+
+---
+
 ## Phase 5 — API — 2026-11-15
 
 Merged in [#9](https://github.com/Moya-Art/ZenithSquad-spherex/pull/9). Squash-merged onto `main`.
