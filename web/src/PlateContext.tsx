@@ -1,4 +1,5 @@
 import { captionFor } from './captions'
+import { formatFlux } from './data'
 import type { Motion, Sequence, Target } from './data'
 
 /**
@@ -58,7 +59,8 @@ export function PlateContext({ target, sequence, motion }: Props) {
             {amplitude >= 1.5 ? `varies ${amplitude.toFixed(1)}×` : 'stable within noise'}
           </div>
           <div className="context-note">
-            Peaks at {peak?.toFixed(0)} on {brightest.date}, falls to {trough?.toFixed(0)} on{' '}
+            Peaks at {peak != null ? formatFlux(peak) : '—'} on {brightest.date}, falls to{' '}
+            {trough != null ? formatFlux(trough) : '—'} on{' '}
             {dimmest.date}. Same stretch applied to every frame, so the change is in the sky, not
             the display.
           </div>

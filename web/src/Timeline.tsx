@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Frame } from './data'
+import { formatFlux } from './data'
 
 /**
  * Timeline: two tracks, one time axis.
@@ -55,7 +56,7 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
 
   const layout = useMemo(() => {
     if (frames.length === 0 || width <= 0) {
-      return { marks: [], ticks: [], curve: '', points: [], usable: 0, fluxLo: 0, fluxHi: 1 }
+      return { marks: [], ticks: [], curve: '', points: [], usable: 0, fluxLo: 0, fluxHi: 1, hasFlux: false }
     }
 
     const times = frames.map((frame) => frame.t_min)
@@ -67,9 +68,12 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
 
     const fluxes = frames.map((frame) => frame.measure?.flux ?? null)
     const finite = fluxes.filter((value): value is number => value !== null && Number.isFinite(value))
-    const fluxLo = finite.length ? Math.min(...finite) : 0
-    const fluxHi = finite.length ? Math.max(...finite) : 1
-    // A flat sequence must not divide by zero, and a 5% headroom keeps peaks off the edge.
+    // No photometry at all is a real outcome (a saturated core), not a scale of 0–1.
+    // Drawing an empty 0–1 axis would read as "we measured no light" instead.
+    const hasFlux = finite.length > 0
+    const fluxLo = hasFlux ? Math.min(...finite) : 0
+    const fluxHi = hasFlux ? Math.max(...finite) : 1
+    // A flat sequence must not divide by zero, and a 16% headroom keeps peaks off the edge.
     const pad = Math.max((fluxHi - fluxLo) * 0.16, fluxHi * 0.02, 1e-9)
     const y = (flux: number) =>
       H_CURVE_TOP + H_CURVE - ((flux - (fluxLo - pad)) / (fluxHi + pad - (fluxLo - pad))) * H_CURVE
@@ -110,7 +114,7 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
       .map((month, i) => ({ ...month, i, x: x(month.t) }))
       .filter((month) => month.i % stride === 0 && month.t >= t0 && month.t <= t1)
 
-    return { marks: points, ticks, curve, points, usable, fluxLo, fluxHi, span }
+    return { marks: points, ticks, curve, points, usable, fluxLo, fluxHi, span, hasFlux }
   }, [frames, width])
 
   if (frames.length === 0) {
@@ -144,8 +148,10 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
       <div className="timeline-head">
         <span className="timeline-title">Light curve</span>
         <span className="timeline-sub mono tnum">
-          flux {layout.fluxLo.toFixed(0)}–{layout.fluxHi.toFixed(0)} · {frames.length} epochs ·{' '}
-          {years.toFixed(2)} yr
+          {layout.hasFlux
+            ? `flux ${formatFlux(layout.fluxLo)}–${formatFlux(layout.fluxHi)} mJy · `
+            : ''}
+          {frames.length} epochs · {years.toFixed(2)} yr
         </span>
       </div>
 
@@ -209,24 +215,40 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
         <text x={PAD_L - 8} y={curveStart + 9} className="timeline-track-label" textAnchor="end">
           FLUX
         </text>
-        <text x={PAD_L - 8} y={curveStart + 9 + 18} className="timeline-value-label" textAnchor="end">
-          {layout.fluxHi.toFixed(0)}
-        </text>
-        <text x={PAD_L - 8} y={curveEnd + 2} className="timeline-value-label" textAnchor="end">
-          {layout.fluxLo.toFixed(0)}
-        </text>
 
-        {[0, 0.5, 1].map((frac) => (
-          <line
-            key={`grid-${frac}`}
-            x1={PAD_L}
-            x2={width - PAD_R}
-            y1={curveStart + frac * H_CURVE}
-            y2={curveStart + frac * H_CURVE}
-            stroke="#1e1e25"
-            strokeWidth={1}
-          />
-        ))}
+        {layout.hasFlux ? (
+          <>
+            <text x={PAD_L - 8} y={curveStart + 9 + 18} className="timeline-value-label" textAnchor="end">
+              {formatFlux(layout.fluxHi)}
+            </text>
+            <text x={PAD_L - 8} y={curveEnd + 2} className="timeline-value-label" textAnchor="end">
+              {formatFlux(layout.fluxLo)}
+            </text>
+
+            {[0, 0.5, 1].map((frac) => (
+              <line
+                key={`grid-${frac}`}
+                x1={PAD_L}
+                x2={width - PAD_R}
+                y1={curveStart + frac * H_CURVE}
+                y2={curveStart + frac * H_CURVE}
+                stroke="#1e1e25"
+                strokeWidth={1}
+              />
+            ))}
+          </>
+        ) : (
+          // An empty 0–1 axis would read as "we measured no light". The truth is that
+          // every core saturated, so only a lower bound exists and nothing can be plotted.
+          <text
+            x={PAD_L + 4}
+            y={curveStart + H_CURVE / 2 + 3}
+            className="timeline-nophotom"
+            textAnchor="start"
+          >
+            no photometry — target core saturated in all {frames.length} epochs
+          </text>
+        )}
 
         {layout.curve && (
           <path
@@ -314,9 +336,9 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
         <span>{frames[0]?.date}</span>
         <span className="timeline-readout">
           {hovered && hovered.i !== index
-            ? `${hovered.date} · ${hovered.flux !== null ? hovered.flux.toFixed(0) : '—'}`
+            ? `${hovered.date} · ${hovered.flux !== null ? formatFlux(hovered.flux) : '—'}`
             : active?.flux != null
-              ? `${active.date} · ${active.flux.toFixed(0)} ± ${frames[index]?.measure?.flux_err.toFixed(0)}`
+              ? `${active.date} · ${formatFlux(active.flux, frames[index]?.measure?.flux_err)}`
               : `${active?.date ?? ''}`}
         </span>
         <span>{frames[frames.length - 1]?.date}</span>

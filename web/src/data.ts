@@ -47,6 +47,10 @@ export type Frame = {
   measure: Measure | null
   /** Why a frame has no measurement: a saturated core, or a clipped cutout. */
   measure_skipped?: string | null
+  /** The target core saturated, so only a lower flux bound exists. */
+  saturated?: boolean
+  /** The centroid fell back to the catalogue prediction rather than being measured. */
+  centroid_from_prediction?: boolean
   /** Only on a live response: where to fetch this frame's WebP. */
   url?: string
 }
@@ -85,6 +89,21 @@ export type Sequence = {
 
 const API = import.meta.env.VITE_API_URL ?? '/api'
 const BASE = import.meta.env.BASE_URL ?? '/'
+
+/**
+ * Flux is in mJy and spans three orders of magnitude across the targets, so a fixed
+ * number of decimals is wrong at one end or the other. Printing `12 ± 0` for an error
+ * of 0.4 mJy claims a precision the measurement does not have.
+ *
+ * Decimals follow the magnitude of the value, with the same count used for the value
+ * and its error so the two stay aligned.
+ */
+export function formatFlux(value: number, error?: number | null): string {
+  const reference = Math.max(Math.abs(value), error != null ? Math.abs(error) : 0)
+  const decimals = reference >= 100 ? 0 : reference >= 10 ? 1 : reference >= 1 ? 2 : 3
+  const shown = value.toFixed(decimals)
+  return error != null && Number.isFinite(error) ? `${shown} ± ${error.toFixed(decimals)}` : shown
+}
 
 class ApiError extends Error {
   status: number | null
