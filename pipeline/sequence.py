@@ -155,6 +155,56 @@ def download(url: str, destination: Path, refresh: bool = False) -> Path:
     raise DownloadFailed(f"{url.split('?')[0]}: {type(last_error).__name__}: {last_error}")
 
 
+def fit_motion(
+    years: np.ndarray, offsets_ra: np.ndarray, offsets_dec: np.ndarray
+) -> dict:
+    """Least-squares rate in arcsec/year, with an error that comes from the residuals.
+
+    The first-vs-last offset alone cannot tell real motion from a centroid that wanders; the fitted
+    rate and its scatter can, which is what the UI needs in order to say either.
+    """
+    design = np.vstack([years - years.mean(), np.ones_like(years)]).T
+    spread = float(np.sum((years - years.mean()) ** 2))
+
+    def one_axis(values: np.ndarray) -> tuple[float, float, float]:
+        slope, _intercept = np.linalg.lstsq(design, values, rcond=None)[0]
+        residuals = values - design @ np.linalg.lstsq(design, values, rcond=None)[0]
+        slope_err = float(np.sqrt(np.sum(residuals ** 2) / max(len(values) - 2, 1) / spread))
+        return float(slope), slope_err, float(np.sqrt(np.mean(residuals ** 2)))
+
+    slope_ra, err_ra, rms_ra = one_axis(offsets_ra)
+    slope_dec, err_dec, rms_dec = one_axis(offsets_dec)
+    total = float(np.hypot(offsets_ra[-1] - offsets_ra[0], offsets_dec[-1] - offsets_dec[0]))
+
+    significant = (
+        abs(slope_ra) > 3.0 * err_ra or abs(slope_dec) > 3.0 * err_dec
+    ) and total > 1.5 * float(np.hypot(rms_ra, rms_dec))
+
+    return {
+        "dx_arcsec": float(offsets_ra[-1] - offsets_ra[0]),
+        "dy_arcsec": float(offsets_dec[-1] - offsets_dec[0]),
+        "dt_years": float(years[-1] - years[0]),
+        "slope_arcsec_per_year": [slope_ra, slope_dec],
+        "slope_err": [err_ra, err_dec],
+        "rms_scatter_arcsec": [rms_ra, rms_dec],
+        "total_arcsec": total,
+        "significant": bool(significant),
+    }
+
+
+def outlier_stats(stack: np.ndarray, frame: np.ndarray) -> dict:
+    """How different this frame is from the median of the others, in image units."""
+    reference = np.nanmedian(stack, axis=0)
+    difference = np.abs(frame - reference)
+    if not np.isfinite(difference).any():
+        return {"mean": None, "median": None, "max_abs": None}
+    return {
+        "mean": float(np.nanmean(difference)),
+        "median": float(np.nanmedian(difference)),
+        "max_abs": float(np.nanmax(difference)),
+    }
+
+
 def build_sequence(request: SequenceRequest, progress=None) -> dict:
     targets = catalog.load_targets(request.targets_path)
     target = next((item for item in targets if item["slug"] == request.slug), None)
@@ -168,7 +218,11 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
         raise ValueError(f"{request.slug} has no frames in {band}")
 
     refs = one_frame_per_date(frame_refs(rows, band))
-    out_dir = Path(request.out_root) / request.slug
+    # Layout follows web/src/data.ts, which Phase 4 already shipped: one JSON per target+band in a
+    # flat directory, frame files prefixed so five targets cannot collide. BUILD_PLAN §5 says
+    # data/fallback/{target}/; that is now a plan change, not a code detail.
+    out_dir = Path(request.out_root) / "sequence"
+    stem = f"{request.slug}_{band}"
 
     def fetch(ref: FrameRef) -> tuple[FrameRef, Path, SkyCoord]:
         year = Time(ref.mjd, format="mjd").decimalyear
@@ -242,96 +296,92 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
     star_mask = np.hypot(xx - star_x, yy - star_y) <= STAR_EXCLUDE_PX
 
     vmin, vmax = global_stretch(list(crop), exclude=star_mask)
+
     webp_sizes = {}
     for (ref, _cutout, _measurement), frame in zip(measurements, crop):
-        path = out_dir / f"{ref.date.isoformat()}.webp"
-        webp_sizes[ref.date] = save_webp(to_uint8(frame, vmin, vmax), path)
-    first_ref, first_cutout, first_measurement = measurements[0]
-    last_ref, last_cutout, last_measurement = measurements[-1]
-    dx, dy = sky_offset(
-        first_cutout.wcs,
-        (first_measurement.x, first_measurement.y),
-        last_cutout.wcs,
-        (last_measurement.x, last_measurement.y),
-    )
-    pixel_scale = float(
-        np.sqrt(abs(np.linalg.det(first_cutout.wcs.pixel_scale_matrix))) * 3600
-    )
-    # The error on a position difference is whatever the centroids actually do — measured on the
-    # sky, because cutouts sit on different pixel grids and raw pixel scatter mixes them. An
-    # assumed 0.5 px would have called a 14 arcsec wander a detection; this does not.
-    residuals_ra, residuals_dec = [], []
-    for (_ref, cutout, measurement), (_r, _p, sky) in zip(measurements, downloads):
-        measured_sky = cutout.wcs.pixel_to_world(measurement.x, measurement.y)
-        delta_ra, delta_dec = sky.spherical_offsets_to(measured_sky)
-        residuals_ra.append(delta_ra.to_value("arcsec"))
-        residuals_dec.append(delta_dec.to_value("arcsec"))
+        name = f"{stem}_{ref.date.isoformat()}.webp"
+        webp_sizes[ref.date] = save_webp(to_uint8(frame, vmin, vmax), out_dir / name)
 
-    scatter_arcsec = float(
-        np.sqrt(0.5 * (np.var(residuals_ra) + np.var(residuals_dec)))
+    pixel_scale = float(
+        np.sqrt(abs(np.linalg.det(measurements[0][1].wcs.pixel_scale_matrix))) * 3600
     )
-    scatter_arcsec = max(scatter_arcsec, 0.25 * pixel_scale)
-    scatter_px = scatter_arcsec / pixel_scale
-    position_error = float(np.sqrt(2) * scatter_arcsec)
+
+    # Positions are compared on the sky, never through pixel indices: cutouts sit on different grids,
+    # so the target can be at x=50 in one frame and x=87 in another and still be the same star.
+    first_sky = measurements[0][1].wcs.pixel_to_world(
+        measurements[0][2].x, measurements[0][2].y
+    )
+    offsets_ra, offsets_dec, years = [], [], []
+    for ref, cutout, measurement in measurements:
+        measured_sky = cutout.wcs.pixel_to_world(measurement.x, measurement.y)
+        delta_ra, delta_dec = first_sky.spherical_offsets_to(measured_sky)
+        offsets_ra.append(delta_ra.to_value("arcsec"))
+        offsets_dec.append(delta_dec.to_value("arcsec"))
+        years.append(Time(ref.mjd, format="mjd").decimalyear)
+
+    motion = fit_motion(np.array(years), np.array(offsets_ra), np.array(offsets_dec))
     saturated_any = any(item[2].saturated for item in measurements)
     fallback_any = any(item[2].centroid_fallback for item in measurements)
-    motion_reliable = not saturated_any and not fallback_any
+    motion["reliable"] = not saturated_any and not fallback_any
 
-    manifest = {
-        "target": request.slug,
-        "name": target.get("name", request.slug),
-        "collection": request.collection,
-        "band": band,
-        "band_wavelength_um": BAND_EDGES_UM.get(band),
-        "size_deg": request.size_deg,
-        "pixel_scale_arcsec": round(pixel_scale, 3),
-        "built": date.today().isoformat(),
-        "vmin": vmin,
-        "vmax": vmax,
-        "n_frames": len(measurements),
-        "n_bands_available": len(summary.bands),
-        "motion_note": (
-            "dx/dy is the measured offset between the first and last date, in arcseconds. A target "
-            "whose proper motion is far below the 6.15 arcsec pixel reports a value consistent with "
-            "zero, and that is the correct result rather than a failure. When the target core is "
-            "saturated its centroid is biased by bloom, which drifts with the roll angle of each "
-            "visit, so motion_reliable is false and dx/dy should not be read as a detection."
-        ),
-        "motion_reliable": motion_reliable,
-        "frames": [
+    frames = []
+    for index, (ref, _cutout, measurement) in enumerate(measurements):
+        outliers = outlier_stats(crop, crop[index])
+        frames.append(
             {
                 "date": ref.date.isoformat(),
                 "t_min": ref.mjd,
                 "obs_id": ref.obs_id,
-                "webp": f"{ref.date.isoformat()}.webp",
+                "file": f"{stem}_{ref.date.isoformat()}.webp",
                 "bytes": webp_sizes[ref.date],
-                "frames_available": ref.frames_available,
-                "x": round(measurement.x, 3),
-                "y": round(measurement.y, 3),
-                "flux": round(measurement.flux, 4),
-                "flux_err": round(measurement.flux_err, 4),
-                "flux_is_lower_bound": measurement.saturated,
-                "snr": None if measurement.snr is None else round(measurement.snr, 2),
                 "bad_fraction": round(measurement.bad_fraction, 5),
-                "aperture_flagged": measurement.aperture_flagged,
+                "outlier": {
+                    key: None if value is None else round(value, 6)
+                    for key, value in outliers.items()
+                },
+                "measure": None if measurement.saturated else {
+                    "x": round(measurement.x, 3),
+                    "y": round(measurement.y, 3),
+                    "flux": round(measurement.flux, 4),
+                    "flux_err": round(measurement.flux_err, 4),
+                    "snr": None if measurement.snr is None else round(measurement.snr, 2),
+                    "wavelength_um": (
+                        None if measurement.wavelength_um is None
+                        else round(measurement.wavelength_um, 3)
+                    ),
+                    "aperture_flagged": measurement.aperture_flagged,
+                    "frames_available": ref.frames_available,
+                },
                 "saturated": measurement.saturated,
                 "centroid_from_prediction": measurement.centroid_fallback,
-                "wavelength_um": (
-                    None if measurement.wavelength_um is None
-                    else round(measurement.wavelength_um, 3)
-                ),
             }
-            for ref, _cutout, measurement in measurements
-        ],
-        "dx_arcsec": round(dx, 3),
-        "dy_arcsec": round(dy, 3),
-        "dt_years": round((last_ref.mjd - first_ref.mjd) / 365.25, 4),
-        "dx_err_arcsec": round(position_error, 3),
-        "dy_err_arcsec": round(position_error, 3),
-        "centroid_scatter_px": round(scatter_px, 3),
+        )
+
+    manifest = {
+        "target": request.slug,
+        "name": target.get("name", request.slug),
+        "band": band,
+        "size_deg": request.size_deg,
+        "vmin": vmin,
+        "vmax": vmax,
+        "pixscale_arcsec": round(pixel_scale, 3),
+        "generated_by": f"python -m pipeline.cli build --target {request.slug} --band {band}",
+        "note": (
+            "One frame per observing date, all sharing the stretch above. Positions are measured on "
+            "each frame's native pixel grid and compared on the sky. A measure of null means the "
+            "target core saturated, so only a lower flux bound exists. motion.reliable is false when "
+            "a saturated core's centroid drifts with the roll angle of each visit."
+        ),
+        "collection": request.collection,
+        "band_wavelength_um": BAND_EDGES_UM.get(band),
+        "built": date.today().isoformat(),
+        "n_frames": len(measurements),
+        "n_bands_available": len(summary.bands),
         "saturated_any": saturated_any,
+        "frames": frames,
+        "motion": motion,
     }
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "sequence.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    (out_dir / f"{stem}.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest

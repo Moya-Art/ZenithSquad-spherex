@@ -220,44 +220,55 @@ def run_build(args: argparse.Namespace) -> int:
 
 
 def print_manifest(manifest: dict) -> None:
-    rows = [
-        (
-            frame["date"],
-            frame["frames_available"],
-            f"{frame['flux']:.4f}",
-            "–" if frame["snr"] is None else f"{frame['snr']:.1f}",
-            f"{frame['bad_fraction']:.4f}",
-            "yes" if frame["saturated"] else "no",
-            f"{frame['bytes'] / 1024:.1f}",
+    rows = []
+    for frame in manifest["frames"]:
+        measure = frame.get("measure")
+        rows.append(
+            (
+                frame["date"],
+                "—" if measure is None else measure.get("frames_available", "—"),
+                "—" if measure is None else f"{measure['flux']:.4f}",
+                "—" if measure is None or measure["snr"] is None else f"{measure['snr']:.1f}",
+                f"{frame['bad_fraction']:.4f}",
+                "yes" if frame["saturated"] else "no",
+                f"{frame['bytes'] / 1024:.1f}",
+            )
         )
-        for frame in manifest["frames"]
-    ]
     print(
         format_table(
             rows,
             ("date", "frames", "flux (mJy)", "snr", "bad_frac", "saturated", "webp KB"),
         )
     )
+
+    motion = manifest["motion"]
     print(
         f"\n{manifest['target']} {manifest['band']} — {manifest['n_frames']} dates, "
         f"one stretch vmin={manifest['vmin']:.3f} vmax={manifest['vmax']:.3f}"
     )
     print(
-        f"moved {manifest['dx_arcsec']:+.2f} ± {manifest['dx_err_arcsec']:.2f} arcsec in RA, "
-        f"{manifest['dy_arcsec']:+.2f} ± {manifest['dy_err_arcsec']:.2f} in Dec "
-        f"over {manifest['dt_years']:.2f} years"
+        f"first-to-last {motion['total_arcsec']:.2f} arcsec over {motion['dt_years']:.2f} yr; "
+        f"fitted rate {motion['slope_arcsec_per_year'][0]:+.2f}, "
+        f"{motion['slope_arcsec_per_year'][1]:+.2f} arcsec/yr "
+        f"(scatter {motion['rms_scatter_arcsec'][0]:.2f}, "
+        f"{motion['rms_scatter_arcsec'][1]:.2f})"
     )
+    print(f"significant: {'yes' if motion['significant'] else 'no'}; "
+          f"reliable: {'yes' if motion.get('reliable', True) else 'no'}")
+
     if manifest.get("saturated_any"):
         print(
-            "note: the target core is saturated in at least one frame, so flux is a lower bound "
-            "and snr is not reported"
+            "note: the target core is saturated, so measure is null — flux is not measurable, "
+            "only a lower bound"
         )
-    if not manifest.get("motion_reliable", True):
+    if not motion.get("reliable", True):
         print(
-            "note: motion is not reliable for this sequence — a saturated core's centroid drifts "
-            "with the roll angle of each visit"
+            "note: a saturated core's centroid drifts with the roll angle of each visit; the "
+            "first-to-last number is not motion"
         )
-    oversized = [frame["date"] for frame in manifest["frames"] if frame["bytes"] > 60_000]
+    oversized = [
+        frame["date"] for frame in manifest["frames"] if frame["bytes"] > 60_000
+    ]
     if oversized:
         print(f"warning: over 60 KB: {oversized}")
 
