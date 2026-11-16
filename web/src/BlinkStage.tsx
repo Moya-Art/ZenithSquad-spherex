@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
+
+import { PlateCanvas } from './PlateCanvas'
+import type { Colormap } from './colormaps'
+import { useGreyFrames } from './useGreyFrames'
 
 /**
- * Blink player.
+ * The date plate's player.
  *
- * Every frame is decoded into an offscreen canvas BEFORE play is enabled. Swapping
- * <img src> flickers, and a flicker reads as a real change in the sky. Drawing from
- * a pre-decoded canvas is a single blit, so nothing between two frames looks different.
- *
- * Frames share one global stretch (vmin/vmax in the manifest), so brightness is
- * comparable across dates without per-frame normalisation.
+ * Every frame is decoded before play is enabled, and `PlateCanvas` has already recoloured all of them
+ * for the current palette, so advancing the transport is a single blit. Swapping a source or
+ * recolouring on demand flashes, and a flash reads as a real change in the sky.
  */
 
 type Props = {
@@ -20,6 +21,7 @@ type Props = {
   playing: boolean
   onPlayingChange: (playing: boolean) => void
   onReadyChange?: (ready: boolean) => void
+  palette: Colormap
 }
 
 export function BlinkStage({
@@ -31,76 +33,15 @@ export function BlinkStage({
   playing,
   onPlayingChange,
   onReadyChange,
+  palette,
 }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const bitmaps = useRef<Array<ImageBitmap | null>>([])
-  const [ready, setReady] = useState(0)
-  const [failed, setFailed] = useState<Set<number>>(new Set())
-
-  // Decode all frames up front. Play stays disabled until everything is in memory.
-  useEffect(() => {
-    let cancelled = false
-    bitmaps.current = sources.map(() => null)
-    setReady(0)
-    setFailed(new Set())
-
-    Promise.all(
-      sources.map(async (src, i) => {
-        try {
-          const response = await fetch(src)
-          if (!response.ok) throw new Error(`HTTP ${response.status}`)
-          const bitmap = await createImageBitmap(await response.blob())
-          if (cancelled) return
-          bitmaps.current[i] = bitmap
-          setReady((n) => n + 1)
-        } catch {
-          if (cancelled) return
-          setFailed((prev) => new Set(prev).add(i))
-          setReady((n) => n + 1)
-        }
-      }),
-    )
-
-    return () => {
-      cancelled = true
-      bitmaps.current.forEach((bitmap) => bitmap?.close())
-    }
-  }, [sources])
-
-  const allLoaded = ready >= sources.length
+  const { frames, ready, failed } = useGreyFrames(sources)
+  const allLoaded = sources.length > 0 && ready >= sources.length
 
   // Tell the parent when play becomes legal, so the button can disable itself.
   useEffect(() => {
-    onReadyChange?.(allLoaded && sources.length > 0)
-  }, [allLoaded, sources.length, onReadyChange])
-
-  // Draw the current frame. Never leave the canvas blank: if the wanted frame has not
-  // decoded yet, draw the nearest one that has, so the stage is never an empty rectangle.
-  useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const context = canvas.getContext('2d')
-    if (!context) return
-
-    let bitmap = bitmaps.current[index]
-    if (!bitmap) {
-      let bestDistance = Infinity
-      bitmaps.current.forEach((candidate, i) => {
-        if (!candidate) return
-        const distance = Math.abs(i - index)
-        if (distance < bestDistance) {
-          bestDistance = distance
-          bitmap = candidate
-        }
-      })
-    }
-    if (!bitmap) return
-
-    canvas.width = bitmap.width
-    canvas.height = bitmap.height
-    context.imageSmoothingEnabled = false
-    context.drawImage(bitmap, 0, 0)
-  }, [index, ready])
+    onReadyChange?.(allLoaded)
+  }, [allLoaded, onReadyChange])
 
   // Transport.
   useEffect(() => {
@@ -124,12 +65,7 @@ export function BlinkStage({
 
   return (
     <div className="frame">
-      <canvas
-        ref={canvasRef}
-        className="frame-canvas"
-        style={{ imageRendering: 'pixelated' }}
-        aria-label={labels[index] ?? 'frame'}
-      />
+      <PlateCanvas frames={frames} index={index} palette={palette} label={labels[index] ?? 'frame'} />
       {currentFailed && <div className="frame-badge frame-badge--bad">frame unavailable</div>}
       {loading && (
         <div className="frame-badge">

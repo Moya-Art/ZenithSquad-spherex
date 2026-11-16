@@ -36,7 +36,7 @@ export function Inspector({ sequence, frame }: Props) {
             : 'no photometry in this frame'
 
   return (
-    <aside className="inspector">
+    <div className="inspector">
       <div className="inspect-block">
         <div className="inspect-key">Epoch</div>
         <div className="inspect-epoch mono tnum">
@@ -89,6 +89,6 @@ export function Inspector({ sequence, frame }: Props) {
       <div className="inspect-foot">
         Candidate for inspection, not a discovery.
       </div>
-    </aside>
+    </div>
   )
 }

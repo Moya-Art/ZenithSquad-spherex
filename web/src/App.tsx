@@ -1,55 +1,53 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import './tokens.css'
 import './App.css'
 
-import { BlinkStage } from './BlinkStage'
-import { CubeView } from './CubeView'
-import { Inspector } from './Inspector'
-import { LoadingNotice } from './LoadingNotice'
-import { PlateContext } from './PlateContext'
-import { Timeline } from './Timeline'
-import { COLORMAPS, type Colormap } from './colormaps'
+import { DatePlate } from './DatePlate'
+import { Footer } from './Footer'
+import { Navbar } from './Navbar'
+import { Sidebar } from './Sidebar'
+import { TrackStack } from './TrackStack'
+import { WavelengthPlate } from './WavelengthPlate'
+import { PALETTES, isComposite, type Colormap, type PaletteEntry } from './colormaps'
 import {
-  frameUrl,
-  loadCube,
-  loadSequence,
+  cubeCompositeUrl,
+  cubePlaneUrl,
   loadTargets,
-  type Cube,
-  type Sequence,
   type Target,
 } from './data'
-import { readViewState, writeViewState } from './viewState'
+import { useCoordinate } from './useCoordinate'
+import { useCube } from './useCube'
+import { useGreyFrames } from './useGreyFrames'
+import { useSequence } from './useSequence'
 
-const BANDS = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6']
-const CUBE_POLL_MS = 2000
+/**
+ * The page: one coordinate, two plates, one palette.
+ *
+ * There is no mode and no slug: a coordinate is the only state, and it is in the URL. Everything that
+ * is not layout lives in a hook (`useCoordinate`, `useSequence`, `useCube`) or a component, so this
+ * file stays a composition and the two sources can never blank each other.
+ */
 
 export default function App() {
-  const initial = useMemo(() => readViewState(), [])
-
   const [targets, setTargets] = useState<Target[]>([])
   const [targetsError, setTargetsError] = useState<string | null>(null)
-  const [slug, setSlug] = useState(initial.target)
-  const [band, setBand] = useState(initial.band)
-  const [sequence, setSequence] = useState<Sequence | null>(null)
-  const [sequenceState, setSequenceState] = useState<'idle' | 'loading' | 'missing' | 'error'>('idle')
-  const [sequenceError, setSequenceError] = useState<string | null>(null)
-  const [index, setIndex] = useState(0)
-  const [playing, setPlaying] = useState(false)
-  const [framesReady, setFramesReady] = useState(false)
-  const [attempt, setAttempt] = useState(0)
-  const epochPending = useRef(true)
+  const [band, setBand] = useState('')
 
-  const [mode, setMode] = useState<'time' | 'cube'>(initial.mode)
-  const [plane, setPlane] = useState(initial.plane ?? 0)
-  const [colormap, setColormap] = useState<Colormap>(
-    () => COLORMAPS.find((entry) => entry.id === initial.cmap) ?? COLORMAPS[0],
-  )
-  const [cube, setCube] = useState<Cube | null>(null)
-  const [cubeState, setCubeState] = useState<'idle' | 'loading' | 'error'>('idle')
-  const [cubeError, setCubeError] = useState<string | null>(null)
-  const [cubeAttempt, setCubeAttempt] = useState(0)
+  const [palette, setPalette] = useState<PaletteEntry>(PALETTES[0])
+  // The date plate keeps whatever ramp was last chosen: the composite has no per-date meaning.
+  const [datePalette, setDatePalette] = useState<Colormap>(PALETTES[0] as Colormap)
 
+  const coords = useCoordinate(targets)
+  const ra = coords.position?.ra ?? null
+  const dec = coords.position?.dec ?? null
+
+  const fallback = coords.target
+    ? { slug: coords.target.slug, band: band || coords.target.band }
+    : null
+
+  const dateLoad = useSequence(ra, dec, band || undefined, fallback)
+  const cubeLoad = useCube(ra, dec, coords.target?.slug ?? null)
 
   useEffect(() => {
     loadTargets()
@@ -57,133 +55,39 @@ export default function App() {
       .catch((error: Error) => setTargetsError(error.message))
   }, [])
 
-  const target = targets.find((t) => t.slug === slug) ?? null
-  const effectiveBand = band || target?.band || 'D6'
+  const choosePalette = (entry: PaletteEntry) => {
+    setPalette(entry)
+    if (!isComposite(entry)) setDatePalette(entry)
+  }
 
-  useEffect(() => {
-    if (!slug) return
-    let cancelled = false
-    setSequenceState('loading')
-    setSequence(null)
-    setSequenceError(null)
-
-    loadSequence(slug, effectiveBand)
-      .then((loaded) => {
-        if (cancelled) return
-        if (!loaded) {
-          setSequenceState('missing')
-          return
-        }
-        setSequence(loaded)
-        setSequenceState('idle')
-
-        // The URL's epoch only means something for the sequence it was captured from.
-        // Apply it once, on first load; later band/target switches start at the first frame.
-        const wanted = epochPending.current ? initial.epoch : null
-        epochPending.current = false
-        const found = wanted ? loaded.frames.findIndex((f) => f.date === wanted) : -1
-        setIndex(found >= 0 ? found : 0)
-      })
-      .catch((error: Error) => {
-        if (cancelled) return
-        setSequenceState('error')
-        setSequenceError(error.message)
-      })
-
-    return () => {
-      cancelled = true
+  // Swatch previews use whichever plate is decoded: a wavelength plane when the cube is loaded,
+  // otherwise the frame on the date plate. Same greyscale source, so both swatch sets are honest.
+  const thumbnailUrl = useMemo(() => {
+    const planes = cubeLoad.cube?.planes ?? []
+    if (planes.length > 0) {
+      const selected = planes.find((plane) => plane.index === cubeLoad.plane) ?? planes[0]
+      return cubePlaneUrl(selected)
     }
-  }, [slug, effectiveBand, initial.epoch, attempt])
+    return dateLoad.sources[dateLoad.index] ?? null
+  }, [cubeLoad.cube, cubeLoad.plane, dateLoad.sources, dateLoad.index])
 
-  const frame = sequence?.frames[index] ?? null
+  const thumbnail = useGreyFrames(thumbnailUrl ? [thumbnailUrl] : []).frames[0] ?? null
+  const compositeUrl = cubeLoad.cube ? cubeCompositeUrl(cubeLoad.cube) : null
 
-  // Spectrum mode. A cold coordinate answers 202 with progress, so this polls the same URL until the
-  // cube is ready; no job id is needed because the coordinate is the job.
+  // Transport keys. Space is play/pause; arrows step one epoch. Ignored while typing a coordinate.
   useEffect(() => {
-    if (mode !== 'cube' || !slug) return
-    let cancelled = false
-    let timer: number | undefined
-    setCube(null)
-    setCubeState('loading')
-    setCubeError(null)
+    if (!dateLoad.sequence) return
+    const step = dateLoad.step
+    const setPlaying = dateLoad.setPlaying
+    const playing = dateLoad.playing
 
-    const fetchOnce = async () => {
-      try {
-        const loaded = await loadCube({ target: slug, refresh: cubeAttempt > 0 })
-        if (cancelled) return
-        setCube(loaded)
-        setCubeState('idle')
-        if (loaded && (loaded.state === 'building' || loaded.state === 'queued')) {
-          timer = window.setTimeout(() => void fetchOnce(), CUBE_POLL_MS)
-        }
-      } catch (error) {
-        if (cancelled) return
-        setCubeState('error')
-        setCubeError(error instanceof Error ? error.message : String(error))
-      }
-    }
-
-    void fetchOnce()
-    return () => {
-      cancelled = true
-      if (timer) window.clearTimeout(timer)
-    }
-  }, [mode, slug, cubeAttempt])
-
-  // Keep the URL in step with the view.
-  useEffect(() => {
-    if (mode === 'cube') {
-      const shareable = colormap.stops.length > 0 && !colormap.id.startsWith('random-')
-      writeViewState({
-        target: slug,
-        band: '',
-        epoch: null,
-        mode: 'cube',
-        plane,
-        cmap: shareable ? colormap.id : null,
-      })
-      return
-    }
-    if (!frame) return
-    writeViewState({
-      target: slug,
-      band: effectiveBand,
-      epoch: frame.date,
-      mode: 'time',
-      plane: null,
-      cmap: null,
-    })
-  }, [slug, effectiveBand, frame, mode, plane, colormap])
-
-  const sources = useMemo(
-    () => (sequence ? sequence.frames.map((f) => frameUrl(f)) : []),
-    [sequence],
-  )
-  const labels = useMemo(
-    () => (sequence ? sequence.frames.map((f) => f.date) : []),
-    [sequence],
-  )
-
-  const step = useCallback(
-    (delta: number) => {
-      if (!sequence) return
-      setPlaying(false)
-      setIndex((current) => Math.min(Math.max(current + delta, 0), sequence.frames.length - 1))
-    },
-    [sequence],
-  )
-
-  // Transport keys. Space is play/pause; arrows step one epoch. In spectrum mode the plane scrubber
-  // owns the arrows, so this map stands down rather than stepping a timeline nobody can see.
-  useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (mode !== 'time') return
       const tag = (event.target as HTMLElement | null)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
       if (event.code === 'Space') {
         event.preventDefault()
-        setPlaying((p) => !p)
+        setPlaying(!playing)
       } else if (event.key === 'ArrowRight') {
         event.preventDefault()
         step(1)
@@ -194,233 +98,92 @@ export default function App() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [step, mode])
+  }, [dateLoad.sequence, dateLoad.step, dateLoad.setPlaying, dateLoad.playing])
+
+  const disabled = coords.position === null
+  const subject = coords.label
 
   return (
     <div className="app">
-      <header className="topbar">
-        <div className="brand">
-          <img
-            className="brand-logo"
-            src="/space-apps-logo.png"
-            alt="NASA Space Apps Challenge"
+      <Navbar
+        targets={targets}
+        targetsError={targetsError}
+        current={coords.target}
+        ra={coords.raInput}
+        dec={coords.decInput}
+        errors={coords.errors}
+        busy={dateLoad.state === 'loading'}
+        onRaChange={coords.setRaInput}
+        onDecChange={coords.setDecInput}
+        onSubmit={coords.submit}
+        onPick={(target) => coords.goTo({ ra: target.ra, dec: target.dec })}
+      />
+
+      <div className="workspace">
+        <div className="stage">
+          <DatePlate
+            label={subject}
+            sequence={dateLoad.sequence}
+            state={dateLoad.state}
+            error={dateLoad.error}
+            retry={dateLoad.retry}
+            index={dateLoad.index}
+            setIndex={dateLoad.setIndex}
+            step={dateLoad.step}
+            playing={dateLoad.playing}
+            setPlaying={dateLoad.setPlaying}
+            ready={dateLoad.ready}
+            setReady={dateLoad.setReady}
+            frame={dateLoad.frame}
+            sources={dateLoad.sources}
+            labels={dateLoad.labels}
+            palette={datePalette}
+            band={band}
+            disabled={disabled}
           />
-          <span className="brand-divider" aria-hidden="true" />
-          <span className="brand-name">SPHEREx Sky-Time</span>
+
+          <WavelengthPlate
+            label={subject}
+            cube={cubeLoad.cube}
+            loading={cubeLoad.loading}
+            error={cubeLoad.error}
+            requested={cubeLoad.requested}
+            request={cubeLoad.request}
+            retry={cubeLoad.retry}
+            plane={cubeLoad.plane}
+            setPlane={cubeLoad.setPlane}
+            palette={palette}
+            disabled={disabled}
+          />
         </div>
 
-        {target && (
-          <div className="topbar-target mono tnum">
-            RA {target.ra.toFixed(4)}° Dec {target.dec >= 0 ? '+' : ''}
-            {target.dec.toFixed(4)}°
-          </div>
-        )}
-
-        <div className="modes" role="group" aria-label="view mode">
-          {(['time', 'cube'] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              className={`mode ${mode === value ? 'is-active' : ''}`}
-              onClick={() => setMode(value)}
-              aria-pressed={mode === value}
-            >
-              {value === 'time' ? 'Time' : 'Spectrum'}
-            </button>
-          ))}
-        </div>
-
-        {mode === 'time' && (
-          <div className="bands" role="group" aria-label="infrared band">
-            {BANDS.map((b) => (
-              <button
-                key={b}
-                type="button"
-                className={`band ${b === effectiveBand ? 'is-active' : ''}`}
-                onClick={() => {
-                  setBand(b)
-                  setIndex(0)
-                  setPlaying(false)
-                }}
-                aria-pressed={b === effectiveBand}
-              >
-                {b}
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
-
-      <div className="body">
-        <nav className="rail" aria-label="targets">
-          <div className="rail-title">Targets</div>
-          {targetsError && <div className="rail-error">{targetsError}</div>}
-          {targets.map((t) => (
-            <button
-              key={t.slug}
-              type="button"
-              className={`rail-item ${t.slug === slug ? 'is-active' : ''}`}
-              onClick={() => {
-                setSlug(t.slug)
-                setBand('')
-                setIndex(0)
-                setPlaying(false)
-              }}
-              aria-current={t.slug === slug}
-            >
-              <span className="rail-name">{t.name}</span>
-              <span className="rail-band mono">{t.band}</span>
-            </button>
-          ))}
-        </nav>
-
-        <main className="main">
-          {mode === 'cube' && (
-            <div className="cube-wrap">
-              {cubeState === 'loading' && !cube && (
-                <LoadingNotice targetName={target?.name ?? null} />
-              )}
-
-              {cubeState === 'error' && (
-                <div className="notice notice--bad">
-                  <div className="notice-title">Could not load this cube</div>
-                  <div className="notice-body mono">{cubeError}</div>
-                  <button
-                    type="button"
-                    className="notice-action"
-                    onClick={() => setCubeAttempt((current) => current + 1)}
-                  >
-                    Try again
-                  </button>
-                </div>
-              )}
-
-              {cube && (
-                <CubeView
-                  cube={cube}
-                  plane={plane}
-                  onPlane={setPlane}
-                  colormap={colormap}
-                  onColormap={setColormap}
-                  onRetry={() => setCubeAttempt((current) => current + 1)}
-                />
-              )}
-            </div>
-          )}
-
-          {mode === 'time' && sequenceState === 'missing' && target && (
-            <div className="notice">
-              <div className="notice-title">
-                No {effectiveBand} frames for {target.name}.
-              </div>
-              <div className="notice-body">
-                The archive has nothing at this coordinate in that band, and there is no committed
-                copy. Try another band, or another target.
-              </div>
-            </div>
-          )}
-
-          {mode === 'time' && sequenceState === 'error' && (
-            <div className="notice notice--bad">
-              <div className="notice-title">Could not load this patch of sky</div>
-              <div className="notice-body mono">{sequenceError}</div>
-              <div className="notice-body">
-                A first visit has to build the sequence from the archive, and IRSA drops requests
-                often enough that this does sometimes fail.
-              </div>
-              <button
-                type="button"
-                className="notice-action"
-                onClick={() => setAttempt((current) => current + 1)}
-              >
-                Try again
-              </button>
-            </div>
-          )}
-
-          {mode === 'time' && sequenceState === 'loading' && (
-            <LoadingNotice targetName={target?.name ?? null} />
-          )}
-
-          {mode === 'time' && sequence && frame && target && (
-            <div className="workbench">
-              <div className="plate">
-                <div className="plate-head">
-                  <span className="plate-name">{target.name}</span>
-                  <span className="plate-meta mono">
-                    {sequence.band} · {sequence.size_deg}° field · {sequence.frames.length} epochs
-                  </span>
-                </div>
-
-                <div className="plate-body">
-                  <div className="plate-stage">
-                    <BlinkStage
-                      sources={sources}
-                      labels={labels}
-                      index={index}
-                      onIndexChange={setIndex}
-                      playing={playing}
-                      onPlayingChange={setPlaying}
-                      onReadyChange={setFramesReady}
-                    />
-
-                    <div className="transport">
-                      <button
-                        type="button"
-                        className="transport-btn"
-                        onClick={() => step(-1)}
-                        aria-label="previous epoch"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        type="button"
-                        className="transport-btn transport-btn--play"
-                        onClick={() => setPlaying(!playing)}
-                        disabled={!framesReady}
-                        aria-label={playing ? 'pause' : 'play'}
-                      >
-                        {playing ? '❙❙' : '▶'}
-                      </button>
-                      <button
-                        type="button"
-                        className="transport-btn"
-                        onClick={() => step(1)}
-                        aria-label="next epoch"
-                      >
-                        ›
-                      </button>
-                      <span className="transport-counter mono tnum">
-                        {String(index + 1).padStart(2, '0')}
-                        <span className="transport-total">
-                          /{String(sequence.frames.length).padStart(2, '0')}
-                        </span>
-                      </span>
-                      <span className="hint mono">space · ← →</span>
-                    </div>
-                  </div>
-
-                  <PlateContext target={target} sequence={sequence} motion={sequence.motion} />
-                </div>
-              </div>
-
-              <Inspector sequence={sequence} frame={frame} />
-            </div>
-          )}
-        </main>
+        <Sidebar
+          sequence={dateLoad.sequence}
+          frame={dateLoad.frame}
+          palette={palette}
+          onPalette={choosePalette}
+          grey={thumbnail}
+          compositeUrl={compositeUrl}
+        />
       </div>
 
-      {mode === 'time' && sequence && (
-        <Timeline
-          frames={sequence.frames}
-          index={index}
-          onSelect={(i) => {
-            setPlaying(false)
-            setIndex(i)
-          }}
-          accent="var(--accent)"
-        />
-      )}
+      <TrackStack
+        band={band}
+        onBand={setBand}
+        resolvedBand={dateLoad.sequence?.band ?? null}
+        loading={dateLoad.state === 'loading'}
+        sequence={dateLoad.sequence}
+        index={dateLoad.index}
+        onSelect={(next) => {
+          dateLoad.setPlaying(false)
+          dateLoad.setIndex(next)
+        }}
+        cube={cubeLoad.cube}
+        plane={cubeLoad.plane}
+        onPlane={cubeLoad.setPlane}
+      />
+
+      <Footer />
     </div>
   )
 }

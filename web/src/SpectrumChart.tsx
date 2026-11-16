@@ -112,9 +112,9 @@ export function SpectrumChart({ planes, points, active, onSelect }: Props) {
   }
 
   return (
-    <div className="spectrum" ref={hostRef}>
+    <div className="spectrum track track--wavelength" ref={hostRef}>
       <div className="spectrum-head">
-        <span className="spectrum-title">Spectrum</span>
+        <span className="spectrum-title">Wavelength</span>
         <span className="spectrum-meta mono tnum">
           {current
             ? `${current.wavelength.toFixed(3)} µm · ${
@@ -240,11 +240,6 @@ export function SpectrumChart({ planes, points, active, onSelect }: Props) {
           </text>
         </svg>
       )}
-
-      <div className="spectrum-foot">
-        Aperture photometry per plane, background from an annulus. Visualization grade — for
-        science numbers use the IRSA SPHEREx Spectrophotometry tool.
-      </div>
     </div>
   )
 }

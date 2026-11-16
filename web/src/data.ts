@@ -141,17 +141,41 @@ export async function loadTargets(): Promise<Target[]> {
   }
 }
 
+/** The committed preview of one target, already served by the dev server and copied on build. */
+export function targetPreviewUrl(target: Target): string {
+  return `${BASE}data/fallback/preview/${target.slug}_${target.band}.png`
+}
+
+export type SequenceFallback = {
+  /** The slug a committed sequence is stored under. */
+  slug: string
+  band: string
+}
+
+export type SequenceOptions = {
+  /** Omitted, the API resolves the band from the dates that coordinate actually has. */
+  band?: string
+  /** Only a resolved named target has a committed copy; an arbitrary coordinate has none. */
+  fallback?: SequenceFallback | null
+}
+
 /**
- * A sequence for one target and band, live when the API answers.
+ * A sequence for one coordinate, live when the API answers.
  *
- * Returns null when the pair genuinely has no sequence — the API says 404 (no coverage) or 422
- * (that band is not available), which is a state the UI renders as "no sequence yet", not as a
- * failure. Anything else — the API down, a 503 from IRSA — falls back to the committed file.
+ * Returns null when the archive genuinely has nothing there — the API says 404 (no coverage) or 422
+ * (that band is not available), which the plate renders as "no data found", not as a failure.
+ * Anything else — the API down, a 503 from IRSA — falls back to the committed file for a named
+ * target, or is reported as the outage it is.
  */
-export async function loadSequence(slug: string, band: string): Promise<Sequence | null> {
+export async function loadSequence(
+  ra: number,
+  dec: number,
+  options: SequenceOptions = {},
+): Promise<Sequence | null> {
   let apiError: unknown = null
   try {
-    const query = new URLSearchParams({ target: slug, band })
+    const query = new URLSearchParams({ ra: String(ra), dec: String(dec) })
+    if (options.band) query.set('band', options.band)
     return await getJson<Sequence>(`${API}/frames?${query.toString()}`)
   } catch (error) {
     const status = error instanceof ApiError ? error.status : null
@@ -159,11 +183,16 @@ export async function loadSequence(slug: string, band: string): Promise<Sequence
     apiError = error
   }
 
+  const fallback = options.fallback
+  if (!fallback) throw apiError ?? new Error('sequence unavailable')
+
   try {
-    return await getJson<Sequence>(`${BASE}data/fallback/sequence/${slug}_${band}.json`)
+    return await getJson<Sequence>(
+      `${BASE}data/fallback/sequence/${fallback.slug}_${fallback.band}.json`,
+    )
   } catch (error) {
     const status = error instanceof ApiError ? error.status : null
-    // No committed copy either. The API failure is the real story: reporting "no sequence yet"
+    // No committed copy either. The API failure is the real story: reporting "no data found"
     // here would blame a missing file for an archive that did not answer.
     if (status === 404) throw apiError ?? error
     throw error
@@ -173,10 +202,6 @@ export async function loadSequence(slug: string, band: string): Promise<Sequence
 export function frameUrl(frame: Frame): string {
   if (frame.url) return absolute(frame.url)
   return `${BASE}data/fallback/sequence/${frame.file}`
-}
-
-export function sequenceUrl(slug: string, band: string): string {
-  return `${BASE}data/fallback/sequence/${slug}_${band}.json`
 }
 
 // --- the 102-band cube -------------------------------------------------------------------------
@@ -269,27 +294,26 @@ export type Cube = {
 }
 
 export type CubeRequest = {
-  target?: string
-  ra?: number
-  dec?: number
+  ra: number
+  dec: number
   size?: number
   refresh?: boolean
+  /** The committed artifact's slug, when this coordinate is a named target. */
+  fallbackSlug?: string | null
 }
 
 /**
  * One request that answers with either the cube or the build's progress.
  *
- * A 501 or a network failure falls back to the committed artifact, so a demo survives the API being
- * down; a 404 is not "missing" here, because a cube is never legitimately absent for a coordinate
- * the archive covers.
+ * A network or server failure falls back to the committed artifact for a named target, so a demo
+ * survives the API being down; a 404 is not "missing" here, because a cube is never legitimately
+ * absent for a coordinate the archive covers.
  */
 export async function loadCube(request: CubeRequest): Promise<Cube | null> {
-  const query = new URLSearchParams()
-  if (request.target) query.set('target', request.target)
-  if (request.ra != null && request.dec != null) {
-    query.set('ra', String(request.ra))
-    query.set('dec', String(request.dec))
-  }
+  const query = new URLSearchParams({
+    ra: String(request.ra),
+    dec: String(request.dec),
+  })
   if (request.size != null) query.set('size', String(request.size))
   if (request.refresh) query.set('refresh', 'true')
 
@@ -300,14 +324,51 @@ export async function loadCube(request: CubeRequest): Promise<Cube | null> {
     apiError = error
   }
 
-  if (request.target) {
+  if (request.fallbackSlug) {
     try {
-      return await getJson<Cube>(`${BASE}data/fallback/cube/${request.target}.json`)
+      return await getJson<Cube>(`${BASE}data/fallback/cube/${request.fallbackSlug}.json`)
     } catch {
       // Fall through: report the API's failure, which is the real story.
     }
   }
   throw apiError ?? new Error('cube unavailable')
+}
+
+/**
+ * The committed cube alone, with no API call.
+ *
+ * The wavelength plate must not queue a 306 MiB build just because someone opened the page, but a
+ * target that already has a committed artifact should show it at once. Reading the file directly is
+ * the cheap probe that tells the two apart.
+ */
+export async function loadCommittedCube(slug: string): Promise<Cube | null> {
+  try {
+    return await getJson<Cube>(`${BASE}data/fallback/cube/${slug}.json`)
+  } catch {
+    return null
+  }
+}
+
+/** One queued build, as `/queue` reports it. Never carries planes or points. */
+export type QueueJob = {
+  key: string
+  name: string
+  ra: number
+  dec: number
+  state: 'queued' | 'building' | 'failed'
+  stage: string | null
+  planes_done: number
+  planes_total: number | null
+  bytes_done: number | null
+  bytes_total: number | null
+  eta_seconds: number | null
+  started_at: string | null
+  updated_at: string
+}
+
+export async function loadQueue(): Promise<QueueJob[]> {
+  const payload = await getJson<{ jobs: QueueJob[] }>(`${API}/queue`)
+  return payload.jobs
 }
 
 export function cubePlaneUrl(plane: CubePlane): string {

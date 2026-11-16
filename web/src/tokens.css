@@ -24,6 +24,11 @@
   --control: 30px;
   --radius: 3px;
 
+  /* Layout: the plates yield to the tracks, the sidebar never squeezes them. */
+  --sidebar-w: 268px;
+  --plate-max: min(100%, 44vh, 520px);
+  --track-max: min(34vh, 300px);
+
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --mono: 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Consolas, monospace;
 
