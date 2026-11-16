@@ -1,0 +1,257 @@
+{
+  "target": "rw_aur",
+  "name": "RW Aurigae",
+  "band": "D3",
+  "size_deg": 0.3,
+  "vmin": 0.007559705378690954,
+  "vmax": 11.783543308180752,
+  "pixscale_arcsec": 6.152,
+  "generated_by": "python -m pipeline.cli build --target rw_aur --band D3",
+  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated (only a lower flux bound exists) or that the target fell outside a clipped cutout, in which case measure_skipped says so. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
+  "collection": "spherex_dr1",
+  "band_wavelength_um": [
+    1.63,
+    2.41
+  ],
+  "built": "2026-11-15",
+  "n_frames": 10,
+  "n_bands_available": 6,
+  "available_bands": {
+    "D1": {
+      "frames": 38,
+      "dates": 9
+    },
+    "D2": {
+      "frames": 37,
+      "dates": 8
+    },
+    "D3": {
+      "frames": 38,
+      "dates": 10
+    },
+    "D4": {
+      "frames": 38,
+      "dates": 9
+    },
+    "D5": {
+      "frames": 37,
+      "dates": 8
+    },
+    "D6": {
+      "frames": 38,
+      "dates": 10
+    }
+  },
+  "position_note": "Position propagated with the catalogue proper motion of the named target.",
+  "saturated_any": true,
+  "frames": [
+    {
+      "date": "2025-09-11",
+      "t_min": 60929.677476,
+      "obs_id": "2025W37_2A_0051_1",
+      "file": "rw_aur_D3_2025-09-11.webp",
+      "bytes": 672,
+      "bad_fraction": 0.03893,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.381789,
+        "median": 0.025281,
+        "max_abs": 225.014111
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-09-17",
+      "t_min": 60935.106637,
+      "obs_id": "2025W38_1A_0538_1",
+      "file": "rw_aur_D3_2025-09-17.webp",
+      "bytes": 662,
+      "bad_fraction": 0.01664,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.25955,
+        "median": 0.023729,
+        "max_abs": 452.347611
+      },
+      "measure": {
+        "x": 86.771,
+        "y": 87.683,
+        "flux": 0.0003,
+        "flux_err": 0.0,
+        "snr": 132.06,
+        "wavelength_um": null,
+        "aperture_flagged": 8,
+        "frames_available": 7
+      },
+      "saturated": false,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-09-18",
+      "t_min": 60936.193798,
+      "obs_id": "2025W38_1A_0738_1",
+      "file": "rw_aur_D3_2025-09-18.webp",
+      "bytes": 564,
+      "bad_fraction": 0.02016,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.216259,
+        "median": 0.011334,
+        "max_abs": 276.325732
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-09-19",
+      "t_min": 60937.144915,
+      "obs_id": "2025W38_2C_0124_1",
+      "file": "rw_aur_D3_2025-09-19.webp",
+      "bytes": 616,
+      "bad_fraction": 0.3383,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.794668,
+        "median": 0.015485,
+        "max_abs": 976.315385
+      },
+      "measure": {
+        "x": 86.305,
+        "y": 51.836,
+        "flux": 0.0006,
+        "flux_err": 0.0,
+        "snr": 154.44,
+        "wavelength_um": null,
+        "aperture_flagged": 8,
+        "frames_available": 1
+      },
+      "saturated": false,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-09-20",
+      "t_min": 60938.230566,
+      "obs_id": "2025W38_2C_0342_1",
+      "file": "rw_aur_D3_2025-09-20.webp",
+      "bytes": 616,
+      "bad_fraction": 0.02919,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.16671,
+        "median": 0.011217,
+        "max_abs": 77.71873
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-02-20",
+      "t_min": 61091.719616,
+      "obs_id": "2026W08_2A_0233_1",
+      "file": "rw_aur_D3_2026-02-20.webp",
+      "bytes": 656,
+      "bad_fraction": 0.01903,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.211966,
+        "median": 0.010198,
+        "max_abs": 153.594071
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-02-21",
+      "t_min": 61092.397775,
+      "obs_id": "2026W08_2A_0361_1",
+      "file": "rw_aur_D3_2026-02-21.webp",
+      "bytes": 568,
+      "bad_fraction": 0.02042,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.116269,
+        "median": 0.010385,
+        "max_abs": 109.183568
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-02-27",
+      "t_min": 61098.644638,
+      "obs_id": "2026W09_2A_0224_2",
+      "file": "rw_aur_D3_2026-02-27.webp",
+      "bytes": 614,
+      "bad_fraction": 0.01143,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.240205,
+        "median": 0.026084,
+        "max_abs": 168.678728
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-01",
+      "t_min": 61100.477411,
+      "obs_id": "2026W09_2A_0552_1",
+      "file": "rw_aur_D3_2026-03-01.webp",
+      "bytes": 686,
+      "bad_fraction": 0.01877,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.26391,
+        "median": 0.019622,
+        "max_abs": 350.306653
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-02",
+      "t_min": 61101.563363,
+      "obs_id": "2026W10_1A_0120_1",
+      "file": "rw_aur_D3_2026-03-02.webp",
+      "bytes": 632,
+      "bad_fraction": 0.01929,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.215602,
+        "median": 0.010815,
+        "max_abs": 554.828327
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    }
+  ],
+  "motion": {
+    "dx_arcsec": -0.44797456173646555,
+    "dy_arcsec": 0.28225351149176303,
+    "dt_years": 0.47092023835625696,
+    "slope_arcsec_per_year": [
+      -1.3134718890459631,
+      -0.17564905526232405
+    ],
+    "slope_err": [
+      0.9126363615458707,
+      1.000552282531697
+    ],
+    "rms_scatter_arcsec": [
+      0.5723099359245757,
+      0.6274415932047239
+    ],
+    "total_arcsec": 0.5294792278384575,
+    "significant": false,
+    "reliable": false
+  }
+}
