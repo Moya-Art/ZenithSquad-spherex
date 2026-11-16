@@ -249,6 +249,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
 
+def _position_fields(position: PositionSpec) -> dict:
+    """The coordinate a job is for.
+
+    A cache key is a hash slice, so a progress file cannot answer "where is this?" on its own. The
+    queue listing needs the position, and writing it at every progress update keeps one source of
+    truth: the file the build already writes.
+    """
+    return {"ra": position.ra, "dec": position.dec, "name": position.name}
+
+
 def _age_seconds(stamp: str | None) -> float:
     if not stamp:
         return float("inf")
@@ -410,6 +420,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         stage_seen[0] = stage
         last_write[0] = now
         cache.put_progress(key, {
+            **_position_fields(position),
             "state": "building",
             "stage": stage,
             "planes_done": done,
@@ -440,18 +451,20 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         )
     except (catalog.ArchiveUnknown, catalog.SchemaError, cube.TileUnavailable) as error:
         note_irsa_contact()
-        _record_failure(cache, key, started, "archive_unreachable", str(error))
+        _record_failure(cache, key, started, "archive_unreachable", str(error), position)
         return
     except ValueError as error:
-        _record_failure(cache, key, started, "cannot_build", str(error))
+        _record_failure(cache, key, started, "cannot_build", str(error), position)
         return
     except Exception as error:  # noqa: BLE001 - reported, not swallowed
-        _record_failure(cache, key, started, "internal", f"{type(error).__name__}: {error}")
+        _record_failure(cache, key, started, "internal", f"{type(error).__name__}: {error}",
+                        position)
         return
 
     note_irsa_contact()
     cache.put_cube_manifest(key, manifest)
     cache.put_progress(key, {
+        **_position_fields(position),
         "state": "done",
         "stage": "done",
         "planes_done": len(manifest["planes"]),
@@ -467,8 +480,16 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
     })
 
 
-def _record_failure(cache: Cache, key: str, started: float, reason: str, detail: str) -> None:
+def _record_failure(
+    cache: Cache,
+    key: str,
+    started: float,
+    reason: str,
+    detail: str,
+    position: PositionSpec | None = None,
+) -> None:
     cache.put_progress(key, {
+        **(_position_fields(position) if position is not None else {}),
         "state": "failed",
         "stage": "failed",
         "planes_done": 0,
@@ -491,6 +512,7 @@ def enqueue_cube(key: str, position: PositionSpec, size_deg: float, refresh: boo
             return
         _cube_jobs.add(key)
     Cache().put_progress(key, {
+        **_position_fields(position),
         "state": "queued",
         "stage": "queued",
         "planes_done": 0,
@@ -550,6 +572,63 @@ def cube_state(
     enqueue_cube(key, position_for(ra, dec, target), size_deg, refresh)
     progress = cache.progress(key) or {}
     return _building_payload(progress), "building"
+
+
+def queue_state() -> list[dict]:
+    """Builds in flight, for the navbar pop-up.
+
+    There is no second registry: the `progress.json` each job already writes *is* the registry, so a
+    build started on one instance is visible from another and survives a reload. Only the light
+    fields are returned — a listing must not carry 102 planes and a spectrum per entry.
+
+    A job whose progress stopped moving is dead rather than slow, so it is dropped instead of shown
+    forever. A malformed or half-written file is skipped, never raised: the queue is a status view,
+    not something that may break the page.
+    """
+    cache = Cache()
+    try:
+        entries = list((cache.root / "cubes").iterdir())
+    except (FileNotFoundError, OSError):
+        return []
+
+    jobs: list[dict] = []
+    for entry in entries:
+        try:
+            if not entry.is_dir():
+                continue
+            progress = cache.progress(entry.name)
+        except OSError:
+            continue
+        if not progress:
+            continue
+        state = progress.get("state")
+        if state not in ("queued", "building", "failed"):
+            continue
+        if _age_seconds(progress.get("updated_at")) >= CUBE_STALE_SECONDS:
+            continue
+        ra, dec = progress.get("ra"), progress.get("dec")
+        if ra is None or dec is None:
+            continue
+        jobs.append(
+            {
+                "key": entry.name,
+                "name": progress.get("name") or f"RA {ra:.4f} Dec {dec:+.4f}",
+                "ra": ra,
+                "dec": dec,
+                "state": state,
+                "stage": progress.get("stage"),
+                "planes_done": progress.get("planes_done") or 0,
+                "planes_total": progress.get("planes_total"),
+                "bytes_done": progress.get("bytes_done"),
+                "bytes_total": progress.get("bytes_total"),
+                "eta_seconds": progress.get("eta_seconds"),
+                "started_at": progress.get("started_at"),
+                "updated_at": progress.get("updated_at"),
+            }
+        )
+
+    jobs.sort(key=lambda job: job["updated_at"] or "", reverse=True)
+    return jobs
 
 
 def cube_plane_webp(

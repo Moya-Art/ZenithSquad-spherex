@@ -1,12 +1,13 @@
 /**
- * Colormaps for the 102 wavelength planes.
+ * Palettes for the two plates.
  *
  * These are anchor sets, not matplotlib's exact 256-entry tables: each is interpolated to 256 stops.
  * That is a deliberate approximation — a display palette needs to look right on a small plane, not to
  * be bit-identical — and it keeps the app's runtime dependencies at react + react-dom.
  *
- * The whole feature is a lookup table applied to the greyscale plane that was already downloaded, so
- * switching palette costs one pass over an ImageData buffer and no network at all.
+ * Both sources are greyscale WebP, so one table serves the date plate and the wavelength plate. The
+ * one exception is the RGB composite: it is three real planes mapped to R, G and B, not a ramp, so it
+ * is an entry in the list but not a `Colormap`.
  */
 
 export type Colormap = {
@@ -16,12 +17,32 @@ export type Colormap = {
   stops: string[]
 }
 
-export const COLORMAPS: Colormap[] = [
+/** Not a lookup table: choosing it shows the composite image in the wavelength plate. */
+export type CompositeEntry = {
+  kind: 'composite'
+  id: 'composite'
+  name: string
+}
+
+export type PaletteEntry = Colormap | CompositeEntry
+
+export const COMPOSITE: CompositeEntry = {
+  kind: 'composite',
+  id: 'composite',
+  name: '3 wavelengths',
+}
+
+/**
+ * The order the swatch list shows. `Turbo` is gone — the loudest ramp in the set — and the composite
+ * takes its slot, second, because it is the only entry that shows real colour.
+ */
+export const PALETTES: PaletteEntry[] = [
   { id: 'greyscale', name: 'Greyscale', stops: [] },
   { id: 'inferno', name: 'Inferno', stops: [
     '#000004', '#1b0c41', '#4a0c6b', '#781c6d', '#a52c60',
     '#cf4446', '#ed6925', '#fb9b06', '#f7d13d', '#fcffa4',
   ] },
+  COMPOSITE,
   { id: 'viridis', name: 'Viridis', stops: [
     '#440154', '#482878', '#3e4989', '#31688e', '#26828e',
     '#1f9e89', '#35b779', '#6ece58', '#b5de2b', '#fde725',
@@ -37,11 +58,6 @@ export const COLORMAPS: Colormap[] = [
   { id: 'cividis', name: 'Cividis', stops: [
     '#00224e', '#123570', '#3b496c', '#575d6d', '#707173',
     '#8a8678', '#a59c74', '#c3b369', '#e1cc55', '#fee838',
-  ] },
-  { id: 'turbo', name: 'Turbo', stops: [
-    '#30123b', '#4145ab', '#4675ed', '#39a2fc', '#1bcfd4', '#24eca6',
-    '#61fc6c', '#a4fc3b', '#d1e834', '#f3c63a', '#fe9b2d', '#f36315',
-    '#d93806', '#b11901', '#7a0402',
   ] },
   { id: 'rainbow', name: 'Rainbow', stops: [
     '#00007f', '#0000ff', '#007fff', '#00ffff', '#7fff7f',
@@ -60,6 +76,14 @@ export const COLORMAPS: Colormap[] = [
     '#cc5049', '#e88b4a', '#f5c86e', '#f7efc0', '#ffffff',
   ] },
 ]
+
+export const COLORMAPS: Colormap[] = PALETTES.filter(
+  (entry): entry is Colormap => !('kind' in entry),
+)
+
+export function isComposite(palette: PaletteEntry): palette is CompositeEntry {
+  return 'kind' in palette
+}
 
 function parseHex(hex: string): [number, number, number] {
   const value = Number.parseInt(hex.replace('#', ''), 16)
@@ -101,7 +125,7 @@ export function buildLut(colormap: Colormap): Uint8Array {
 }
 
 /** Recolour in place: the red channel of a greyscale plane indexes the table. */
-export function applyLut(rgba: Uint8ClampedArray, lut: Uint8Array): Uint8ClampedArray {
+export function applyLut<T extends Uint8ClampedArray>(rgba: T, lut: Uint8Array): T {
   for (let i = 0; i < rgba.length; i += 4) {
     const index = rgba[i] * 3
     rgba[i] = lut[index]

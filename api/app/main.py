@@ -210,6 +210,16 @@ def read_cube(
     return payload
 
 
+@app.get("/queue")
+def read_queue(response: Response) -> dict:
+    """Cube builds in flight, read from the progress files the jobs already write.
+
+    Never cached: the point of the pop-up is that it shows a build moving while you browse elsewhere.
+    """
+    response.headers["Cache-Control"] = "no-store"
+    return {"jobs": service.queue_state()}
+
+
 @app.get("/cube/plane")
 def read_cube_plane(
     plane: int = Query(ge=0, le=1023),
