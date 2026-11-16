@@ -176,3 +176,51 @@ def test_a_stale_stamp_counts_as_dead():
     assert service._age_seconds("2000-01-01T00:00:00+00:00") > service.CUBE_STALE_SECONDS
     assert service._age_seconds(None) == float("inf")
     assert service._age_seconds("not a date") == float("inf")
+
+
+@pytest.fixture()
+def build_env(tmp_path, monkeypatch):
+    """A cache and a tile directory in tmp_path, so a stubbed build never touches the real ones."""
+    monkeypatch.setenv("API_CACHE_DIR", str(tmp_path / "api"))
+    monkeypatch.setattr(service, "CUBE_TILE_DIR", tmp_path / "tiles")
+    return tmp_path / "tiles" / "hips_x_N5_10226.fits"
+
+
+def test_a_finished_cube_build_deletes_the_tile_it_used(build_env, monkeypatch):
+    tile = build_env
+
+    def fake_build(request, progress=None, raw_paths=None):
+        tile.parent.mkdir(parents=True, exist_ok=True)
+        tile.write_bytes(b"x" * 500)
+        raw_paths.append(tile)
+        return {"planes": [], "depth": 0, "spectrum": {"points": []}}
+
+    monkeypatch.setattr(service.cube, "build_cube", fake_build)
+
+    service._run_cube_job("key-a", service.position_for(90.0, 20.0, None), 0.3, False)
+
+    assert not tile.exists()
+    assert list(tile.parent.glob("*.fits")) == []
+    progress = service.Cache().progress("key-a")
+    assert progress["state"] == "done"
+    assert progress["bytes_freed"] == 500
+
+
+def test_a_failed_cube_build_keeps_what_it_downloaded(build_env, monkeypatch):
+    """Debugging an archive failure needs the file that failed. Only success deletes."""
+    tile = build_env
+
+    def fake_build(request, progress=None, raw_paths=None):
+        tile.parent.mkdir(parents=True, exist_ok=True)
+        tile.write_bytes(b"x" * 500)
+        raw_paths.append(tile)
+        raise ValueError("the frames do not overlap")
+
+    monkeypatch.setattr(service.cube, "build_cube", fake_build)
+
+    service._run_cube_job("key-a", service.position_for(90.0, 20.0, None), 0.3, False)
+
+    assert tile.exists()
+    progress = service.Cache().progress("key-a")
+    assert progress["state"] == "failed"
+    assert "bytes_freed" not in progress

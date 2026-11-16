@@ -209,6 +209,48 @@ def test_bad_parameters_are_422(client, params):
     assert client.get("/frames", params=params).status_code == 422
 
 
+def test_a_raw_coordinate_reaches_the_service_without_a_band(client, monkeypatch):
+    """The URL carries `ra` and `dec` only; the band is resolved inside the build from the date count."""
+    seen = {}
+
+    def fake_live(ra, dec, band=None, **kwargs):
+        seen.update(ra=ra, dec=dec, band=band)
+        return dict(MANIFEST), "miss"
+
+    monkeypatch.setattr(service, "live_sequence", fake_live)
+
+    response = client.get("/frames", params={"ra": 248.16775, "dec": 66.75497})
+
+    assert response.status_code == 200
+    assert seen == {"ra": 248.16775, "dec": 66.75497, "band": None}
+
+
+def test_a_coordinate_with_no_frames_is_no_coverage_not_a_crash(monkeypatch):
+    monkeypatch.setattr(service.catalog, "fetch_rows", lambda *args, **kwargs: [])
+
+    with pytest.raises(service.NoCoverage, match="0 frames"):
+        service.resolve_band(10.0, 0.0, None)
+
+
+def test_a_built_sequence_deletes_the_cutouts_it_used(client, monkeypatch, tmp_path):
+    monkeypatch.setenv("API_CACHE_DIR", str(tmp_path / "api"))
+    cutout = tmp_path / "fits" / "2025W20_2D_0243_1_D1_0.3.fits"
+
+    def fake_build(position, **kwargs):
+        cutout.parent.mkdir(parents=True, exist_ok=True)
+        cutout.write_bytes(b"x" * 2048)
+        kwargs["raw_paths"].append(cutout)
+        return dict(MANIFEST)
+
+    monkeypatch.setattr(service, "build_from_position", fake_build)
+
+    response = client.get("/frames", params={"target": "r_dra", "band": "D1"})
+
+    assert response.status_code == 200
+    assert not cutout.exists()
+    assert response.json()["n_frames"] == MANIFEST["n_frames"]
+
+
 def test_no_route_ever_answers_with_fits(client, monkeypatch):
     monkeypatch.setattr(service, "live_sequence", lambda *args, **kwargs: (dict(MANIFEST), "hit"))
     monkeypatch.setattr(service, "preview_webp", lambda *args, **kwargs: (WEBP, "hit"))

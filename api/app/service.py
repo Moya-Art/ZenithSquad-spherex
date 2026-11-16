@@ -19,6 +19,7 @@ Nothing here knows about HTTP. `api.app.main` maps exceptions to status codes.
 from __future__ import annotations
 
 import json
+import logging
 import os
 import queue
 import threading
@@ -27,10 +28,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlencode
 
-from pipeline import catalog, cube
+from pipeline import catalog, cleanup, cube
 from pipeline.sequence import PositionSpec, build_from_position, pick_band
 
 from api.app.cache import Cache, cube_key, frame_key, sequence_key
+
+_log = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TARGETS_PATH = Path(os.environ.get("TARGETS_PATH", REPO_ROOT / "data" / "targets.json"))
@@ -180,6 +183,19 @@ def cached_sequence(
     return None if manifest is None else _decorate(manifest, ra, dec, size_deg)
 
 
+def _free_raw(raw: list[Path], key: str) -> int:
+    """Delete the raw downloads a successful build consumed. Never called on a failure.
+
+    A failed build keeps its FITS files: debugging an archive failure needs the download that
+    failed. And this runs only after the manifest and the WebPs are on disk, so a crash between the
+    two costs a re-download and gains nothing.
+    """
+    freed = cleanup.delete_raw(raw)
+    if freed:
+        _log.info("freed %d bytes of raw downloads for %s", freed, key)
+    return freed
+
+
 def live_sequence(
     ra: float,
     dec: float,
@@ -210,6 +226,7 @@ def live_sequence(
             if cached is not None:
                 return _decorate(cached, ra, dec, size_deg), "hit"
 
+        raw: list[Path] = []
         manifest = build_from_position(
             position_for(ra, dec, target),
             collection=collection,
@@ -218,8 +235,10 @@ def live_sequence(
             out_root=cache.sequence_dir(key),
             cache_dir=FITS_CACHE_DIR,
             write_manifest=True,
+            raw_paths=raw,
         )
         cache.put_manifest(key, manifest)
+        _free_raw(raw, key)
         note_irsa_contact()
         return _decorate(manifest, ra, dec, size_deg), "miss"
     finally:
@@ -441,6 +460,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         })
 
     try:
+        raw: list[Path] = []
         manifest = cube.build_cube(
             cube.CubeRequest(
                 position=position,
@@ -451,6 +471,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
                 refresh=refresh,
             ),
             progress=publish,
+            raw_paths=raw,
         )
     except (catalog.ArchiveUnknown, catalog.SchemaError, cube.TileUnavailable) as error:
         note_irsa_contact()
@@ -466,6 +487,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
 
     note_irsa_contact()
     cache.put_cube_manifest(key, manifest)
+    freed = _free_raw(raw, key)
     cache.put_progress(key, {
         "state": "done",
         "stage": "done",
@@ -479,6 +501,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         "planes": manifest["planes"],
         "points": manifest["spectrum"]["points"],
         "error": None,
+        "bytes_freed": freed,
         **position_fields(position),
     })
 

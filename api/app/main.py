@@ -16,6 +16,7 @@ Failure identities, which is the only interesting part of this file:
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 
 from fastapi import FastAPI, Header, HTTPException, Query, Response
@@ -26,7 +27,14 @@ from pipeline import catalog
 
 from api.app import service
 
-APP_VERSION = "0.6.0"
+# Uvicorn configures its own loggers and leaves the root alone, so a build's own record — the bytes
+# a cleanup freed, for instance — would otherwise be written to a logger nobody reads.
+logging.basicConfig(
+    level=os.environ.get("LOG_LEVEL", "INFO"),
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
+APP_VERSION = "0.7.0"
 
 MANIFEST_MAX_AGE = 3600
 FRAME_MAX_AGE = service.IMMUTABLE_SECONDS

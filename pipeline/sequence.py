@@ -222,7 +222,8 @@ def outlier_stats(stack: np.ndarray, frame: np.ndarray) -> dict:
     }
 
 
-def build_sequence(request: SequenceRequest, progress=None) -> dict:
+def build_sequence(request: SequenceRequest, progress=None,
+                   raw_paths: list[Path] | None = None) -> dict:
     """Build one named target's sequence, resolving its position from `targets.json`."""
     targets = catalog.load_targets(request.targets_path)
     target = next((item for item in targets if item["slug"] == request.slug), None)
@@ -247,6 +248,7 @@ def build_sequence(request: SequenceRequest, progress=None) -> dict:
         workers=request.workers,
         refresh=request.refresh,
         progress=progress,
+        raw_paths=raw_paths,
     )
 
 
@@ -262,12 +264,17 @@ def build_from_position(
     refresh: bool = False,
     write_manifest: bool = True,
     progress=None,
+    raw_paths: list[Path] | None = None,
 ) -> dict:
     """Build the time sequence for any position: named target or a coordinate typed by a visitor.
 
     `write_manifest=False` lets a caller hold the manifest without a second read (the API caches it
     under its own key); the WebPs are always written under `out_root` because that is what the
     manifest's `file` fields point at.
+
+    `raw_paths` is where the cutouts this build actually used are reported, so a caller can delete
+    them once the WebPs exist. It is filled in, not returned: the builder has no business deciding
+    whether its ingredients are still wanted, and a glob would delete another build's files.
     """
     rows = catalog.fetch_rows(position.ra, position.dec, collection)
     summary = catalog.summarise(catalog.frames_from_rows(rows))
@@ -298,6 +305,9 @@ def build_from_position(
 
     with ThreadPoolExecutor(max_workers=workers) as pool:
         downloads = list(pool.map(fetch, refs))
+
+    if raw_paths is not None:
+        raw_paths.extend(path for _ref, path, _sky in downloads)
 
     cutouts = []
     for ref, path, sky in downloads:
