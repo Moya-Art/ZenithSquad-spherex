@@ -264,6 +264,17 @@ def read_cube_composite(
     return Response(content=data, media_type="image/webp", headers=headers)
 
 
+@app.get("/queue")
+def read_queue(response: Response) -> dict:
+    """Cube builds this instance knows about, newest first.
+
+    It exists because a cube build is a server-side job, not a browser fetch: leaving the coordinate
+    must not hide a build that is still running. Live state, so it is never cached.
+    """
+    response.headers["Cache-Control"] = "no-store"
+    return {"jobs": service.queue_state()}
+
+
 @app.get("/healthz")
 def healthz() -> dict:
     """Liveness, plus whether the archive has answered and the cache can be written."""

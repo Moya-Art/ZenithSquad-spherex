@@ -23,6 +23,45 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7 corrections, backend B — `GET /queue` — 2026-11-16
+
+Merged in [#14](https://github.com/Moya-Art/ZenithSquad-spherex/pull/14). Squash-merged onto `main`.
+
+### Added
+
+- `GET /queue` → `{"jobs": [...]}`, `Cache-Control: no-store`. It answers the question the page could
+  not ask: *is the build I started still running?* The job registry was already on disk (one
+  `progress.json` per cache key, from Phase 6), so this is a directory walk and no new storage.
+- `api/app/service.py::queue_state()` — newest first; finished jobs are dropped (a done job is a cache
+  hit, not a queue item); a stamp older than the 120 s staleness window is a dead worker and is
+  dropped; a half-written file is skipped rather than turned into a 500.
+- `tests/test_api_queue.py` — 12 tests: empty cache, building, queued, failed, newest-first, finished
+  dropped, stale dropped, missing position skipped, corrupt file skipped, name fallback, route shape
+  and `no-store`.
+
+### Changed
+
+- A `progress.json` record now also carries `ra`, `dec` and `name`, in every state — queued, building,
+  done and failed. Without them the queue could not name a job: the cache key is a hash, and the
+  position was never written down.
+- `_record_failure` takes the `PositionSpec` so the failed record has it too.
+
+### Measured
+
+- Live check on the R Draconis coordinate: `/cube?ra=248.16775&dec=66.75497` → `202`; `/queue` listed
+  it as `building` with `planes_total = 102`; the build reached `done` (102 planes, tile already
+  cached) and `/queue` went back to `{"jobs": []}` while the same URL answered `200` from the cache.
+
+### Plan changes
+
+- `Docs/phase-7-corrections.md` §1.4 said the queue should return a list. It returns
+  `{"jobs": [...]}`, matching `/targets` returning `{"targets": [...]}`; the frontend reads `.jobs`.
+- `Docs/phase-7-corrections.md` §1.4 does not mention `ra`/`dec`/`name` in `progress.json`. They are
+  needed, and are the only change to that file's schema.
+- §6 Phase 5 route table gains `GET /queue`.
+
+---
+
 ## Phase 7 corrections, backend A — one contrast curve — 2026-11-16
 
 Merged in [#13](https://github.com/Moya-Art/ZenithSquad-spherex/pull/13). Squash-merged onto `main`.
