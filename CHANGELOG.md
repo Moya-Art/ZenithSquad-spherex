@@ -23,6 +23,23 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7e — layout, colour controls and a wavelength play control — 2026-11-16
+
+Merged in [#23](https://github.com/Moya-Art/ZenithSquad-spherex/pull/23). Squash-merged onto `main`.
+
+### Changed
+- The sidebar runs the full height of the workspace. The bottom tracks split under their plates — dates left, wavelength right — with the band row across the top.
+- Targets and Queue are filled accent buttons, and the accent is the Space Apps red sampled from the competition logo instead of orange.
+- The wavelength plate gets a play control: it sweeps the planes at the date plate's cadence until the last one, and pauses on a manual step or a palette switch.
+- The RGB tint is gone. In its place, a colour-adjust panel: a background/highlight map so black can become any colour, per-channel gains, and a grey-level threshold (above/below, level, softness, colour) read from the original greyscale value, so recolouring never compounds.
+- Loading, no-data and load-on-demand share one notice component; they no longer look like three different tools.
+
+### Notes
+- `web/` only. `api/`, `pipeline/` and `data/` are byte-identical to `main` after the merge, verified with an empty diff, so the bucket store from #21 and the health route from #19 are untouched.
+- 158 backend tests and 20 frontend tests pass; the bundle grows 266 → 272 kB.
+
+---
+
 ## Phase 7d — the plate opens on committed frames, and the URL becomes a place — 2026-11-16
 
 Merged in [#20](https://github.com/Moya-Art/ZenithSquad-spherex/pull/20). Squash-merged onto `main`.
