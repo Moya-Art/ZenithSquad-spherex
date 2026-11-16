@@ -1,56 +1,72 @@
 /**
- * URL state: /view?target=&band=&epoch=&mode=&plane=&cmap=
+ * URL state: `?ra=248.16775&dec=66.75497` and nothing else.
  *
- * Phase 4 spec names ra/dec/band/epoch/fov. For the committed-file build the
- * target slug is what identifies a sequence, so `target` replaces `ra`/`dec`
- * until Phase 5 serves arbitrary coordinates. `epoch` is a date, not an index,
- * so a pasted URL keeps its meaning even if the frame list changes.
+ * A coordinate is the only shareable state. A band, an epoch, a mode or a palette describe a view of
+ * one particular frame list, and a link that carries them stops meaning what it said once the list
+ * changes. Five decimals is 0.036″, the rounding the cache key uses, so a shared link and the request
+ * it triggers always agree on the same cache entry.
  *
- * Phase 6 adds a second mode. `plane` is the cube's wavelength-plane index and `cmap` the palette
- * id, so a shared link reproduces the exact view someone was looking at.
+ * An out-of-range coordinate is rejected here, before any request is made: `?ra=999` is a typo, not a
+ * patch of sky.
  */
 
-export type Mode = 'time' | 'cube'
+export type Position = { ra: number; dec: number }
 
-export type ViewState = {
-  target: string
-  band: string
-  epoch: string | null
-  mode: Mode
-  plane: number | null
-  cmap: string | null
+/** R Draconis: the first row of `data/targets.json`, so the default page is a real target. */
+export const DEFAULT_POSITION: Position = { ra: 248.16775, dec: 66.75497 }
+
+export const URL_DECIMALS = 5
+
+export type ParsedViewState =
+  | { position: Position; invalid: false }
+  | { position: null; invalid: true }
+
+export function isValidCoordinate(ra: number, dec: number): boolean {
+  return Number.isFinite(ra) && Number.isFinite(dec) && ra >= 0 && ra < 360 && dec >= -90 && dec <= 90
 }
 
-const DEFAULT_TARGET = 'r_dra'
+function parseDegrees(value: string): number | null {
+  if (!value.trim()) return null
+  const parsed = Number(value)
+  return Number.isFinite(parsed) ? parsed : null
+}
 
-export function readViewState(): ViewState {
-  const params = new URLSearchParams(window.location.search)
-  const plane = params.get('plane')
-  return {
-    target: params.get('target') ?? DEFAULT_TARGET,
-    band: params.get('band') ?? '',
-    epoch: params.get('epoch'),
-    mode: params.get('mode') === 'cube' ? 'cube' : 'time',
-    plane: plane == null || plane === '' ? null : Number(plane),
-    cmap: params.get('cmap'),
+export function parseViewState(search: string): ParsedViewState {
+  const params = new URLSearchParams(search)
+  const rawRa = params.get('ra')
+  const rawDec = params.get('dec')
+
+  // Nothing in the URL: start on the default target.
+  if (rawRa == null && rawDec == null) {
+    return { position: DEFAULT_POSITION, invalid: false }
   }
+
+  // Half a coordinate is not a coordinate.
+  if (rawRa == null || rawDec == null) {
+    return { position: null, invalid: true }
+  }
+
+  const ra = parseDegrees(rawRa)
+  const dec = parseDegrees(rawDec)
+  if (ra == null || dec == null || !isValidCoordinate(ra, dec)) {
+    return { position: null, invalid: true }
+  }
+
+  return { position: { ra, dec }, invalid: false }
 }
 
-export function writeViewState(state: ViewState): void {
+export function serializeViewState(position: Position): string {
   const params = new URLSearchParams()
-  params.set('target', state.target)
-  if (state.band) params.set('band', state.band)
-  if (state.epoch) params.set('epoch', state.epoch)
-  if (state.mode === 'cube') {
-    params.set('mode', 'cube')
-    if (state.plane != null) params.set('plane', String(state.plane))
-    if (state.cmap) params.set('cmap', state.cmap)
-  }
-
-  const next = `${window.location.pathname}?${params.toString()}`
-  window.history.replaceState(null, '', next)
+  params.set('ra', position.ra.toFixed(URL_DECIMALS))
+  params.set('dec', position.dec.toFixed(URL_DECIMALS))
+  return `?${params.toString()}`
 }
 
-export function shareUrl(): string {
-  return window.location.href
+export function readViewState(): ParsedViewState {
+  return parseViewState(window.location.search)
+}
+
+export function writeViewState(position: Position): void {
+  const next = `${window.location.pathname}${serializeViewState(position)}`
+  window.history.replaceState(null, '', next)
 }

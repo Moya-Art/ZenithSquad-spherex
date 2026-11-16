@@ -144,9 +144,9 @@ export function Timeline({ frames, index, onSelect, accent }: Props) {
   const curveEnd = H_CURVE_TOP + H_CURVE
 
   return (
-    <div className="timeline" ref={wrapRef}>
+    <div className="timeline track track--date" ref={wrapRef}>
       <div className="timeline-head">
-        <span className="timeline-title">Light curve</span>
+        <span className="timeline-title">Dates</span>
         <span className="timeline-sub mono tnum">
           {layout.hasFlux
             ? `flux ${formatFlux(layout.fluxLo)}–${formatFlux(layout.fluxHi)} mJy · `

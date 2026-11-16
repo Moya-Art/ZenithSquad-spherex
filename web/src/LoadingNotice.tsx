@@ -1,18 +1,19 @@
 import { useEffect, useState } from 'react'
 
 /**
- * What the app shows while a live sequence is being built.
+ * What a plate shows while its build runs.
  *
- * A cold `/frames` downloads one cutout per observing date from IRSA, so it takes tens of seconds
- * and can take minutes if the archive is slow. "loading sequence…" gave no way to tell a slow build
- * from a hang, and no idea what was happening. This says what the work is, shows that it is still
- * moving, and stops claiming a duration it cannot know.
+ * Each plate explains its own work: a date sequence is a cutout per observing date, a wavelength
+ * plate is one large all-sky tile. Keeping one message for both meant the cube path claimed a
+ * duration it could not honour, so `kind` is not cosmetic.
  */
+
 type Props = {
+  kind: 'sequence' | 'cube'
   targetName: string | null
 }
 
-export function LoadingNotice({ targetName }: Props) {
+export function LoadingNotice({ kind, targetName }: Props) {
   const [seconds, setSeconds] = useState(0)
 
   // Only setState inside the interval, never in the effect body: the counter belongs to the wait.
@@ -25,11 +26,19 @@ export function LoadingNotice({ targetName }: Props) {
 
   return (
     <div className="notice" role="status" aria-live="polite">
-      <div className="notice-title">Building {subject} from the NASA archive</div>
+      <div className="notice-title">
+        {kind === 'sequence'
+          ? `Building ${subject} from the NASA archive`
+          : `Measuring the 102 wavelengths of ${subject}`}
+      </div>
       <div className="notice-body">
-        {seconds < 3
-          ? 'Asking IRSA which dates this patch of sky was observed…'
-          : 'The first visit to a coordinate downloads one image per observing date and renders them all against a single brightness scale. Usually 30–60 seconds; returns here are instant.'}
+        {kind === 'sequence'
+          ? seconds < 3
+            ? 'Asking IRSA which dates this patch of sky was observed…'
+            : 'The first visit to a coordinate downloads one image per observing date and renders them all against a single brightness scale. Returns here are instant.'
+          : seconds < 3
+            ? 'Fetching one all-sky tile and cropping it to this coordinate…'
+            : 'This patch needs one 306 MB all-sky tile. It is charged once per patch of sky, and the raw tile is deleted once the planes are rendered.'}
         <div className="notice-elapsed mono tnum">{seconds}s elapsed</div>
       </div>
     </div>

@@ -36,6 +36,10 @@ def record(cache: Cache, key: str, **fields) -> None:
         "ra": 90.0,
         "dec": 20.0,
         "name": "RA 90.0000 Dec +20.0000",
+        # A real progress file carries these; a listing must not.
+        "message": "rendering planes",
+        "planes": [{"index": 0, "file": "plane-000.webp"}],
+        "points": [{"index": 0, "flux_mjy": 1.2}],
     }
     progress.update(fields)
     cache.put_progress(key, progress)
@@ -59,6 +63,7 @@ def test_a_building_job_is_listed_with_what_a_visitor_needs(cache):
     assert job["ra"] == 90.0
     assert job["dec"] == 20.0
     assert job["name"] == "RA 90.0000 Dec +20.0000"
+    assert "planes" not in job and "points" not in job
 
 
 def test_newest_first(cache):
