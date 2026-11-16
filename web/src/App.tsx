@@ -10,6 +10,7 @@ import { Sidebar } from './Sidebar'
 import { TrackStack } from './TrackStack'
 import { WavelengthPlate } from './WavelengthPlate'
 import { PALETTES, isComposite, type Colormap, type PaletteEntry } from './colormaps'
+import { NEUTRAL_TINT, type Tint } from './colorAdjust'
 import {
   cubeCompositeUrl,
   cubePlaneUrl,
@@ -37,6 +38,8 @@ export default function App() {
   const [palette, setPalette] = useState<PaletteEntry>(PALETTES[0])
   // The date plate keeps whatever ramp was last chosen: the composite has no per-date meaning.
   const [datePalette, setDatePalette] = useState<Colormap>(PALETTES[0] as Colormap)
+  // Gains, background/highlight and the grey-level threshold. The neutral value changes nothing.
+  const [tint, setTint] = useState<Tint>(NEUTRAL_TINT)
 
   const coords = useCoordinate(targets)
   const ra = coords.position?.ra ?? null
@@ -142,6 +145,7 @@ export default function App() {
             sources={dateLoad.sources}
             labels={dateLoad.labels}
             palette={datePalette}
+            tint={tint}
             band={band}
             disabled={disabled}
           />
@@ -157,9 +161,26 @@ export default function App() {
             plane={cubeLoad.plane}
             setPlane={cubeLoad.setPlane}
             palette={palette}
+            tint={tint}
             disabled={disabled}
           />
         </div>
+
+        <TrackStack
+          band={band}
+          onBand={setBand}
+          resolvedBand={dateLoad.sequence?.band ?? null}
+          loading={dateLoad.state === 'loading'}
+          sequence={dateLoad.sequence}
+          index={dateLoad.index}
+          onSelect={(next) => {
+            dateLoad.setPlaying(false)
+            dateLoad.setIndex(next)
+          }}
+          cube={cubeLoad.cube}
+          plane={cubeLoad.plane}
+          onPlane={cubeLoad.setPlane}
+        />
 
         <Sidebar
           sequence={dateLoad.sequence}
@@ -168,24 +189,11 @@ export default function App() {
           onPalette={choosePalette}
           grey={thumbnail}
           compositeUrl={compositeUrl}
+          tint={tint}
+          onTint={setTint}
+          tintApplies={!isComposite(palette)}
         />
       </div>
-
-      <TrackStack
-        band={band}
-        onBand={setBand}
-        resolvedBand={dateLoad.sequence?.band ?? null}
-        loading={dateLoad.state === 'loading'}
-        sequence={dateLoad.sequence}
-        index={dateLoad.index}
-        onSelect={(next) => {
-          dateLoad.setPlaying(false)
-          dateLoad.setIndex(next)
-        }}
-        cube={cubeLoad.cube}
-        plane={cubeLoad.plane}
-        onPlane={cubeLoad.setPlane}
-      />
 
       <Footer />
     </div>

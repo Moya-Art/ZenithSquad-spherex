@@ -9,6 +9,7 @@
 import { useEffect, useState } from 'react'
 
 import { PlateCanvas } from './PlateCanvas'
+import type { Tint } from './colorAdjust'
 import { isComposite, type PaletteEntry } from './colormaps'
 import { cubeCompositeUrl, cubePlaneUrl, type Cube } from './data'
 import { useGreyFrames } from './useGreyFrames'
@@ -18,6 +19,7 @@ type Props = {
   plane: number
   onPlane: (index: number) => void
   palette: PaletteEntry
+  tint?: Tint
   onRetry: () => void
 }
 
@@ -81,9 +83,10 @@ export function ProgressStrip({ cube }: { cube: Cube }) {
   )
 }
 
-export function CubeView({ cube, plane, onPlane, palette, onRetry }: Props) {
+export function CubeView({ cube, plane, onPlane, palette, tint, onRetry }: Props) {
   const planeUrls = cube.planes.map(cubePlaneUrl)
-  const { frames: planeFrames } = useGreyFrames(planeUrls)
+  const { frames: planeFrames, ready } = useGreyFrames(planeUrls)
+  const [playing, setPlaying] = useState(false)
 
   const compositeUrl = cubeCompositeUrl(cube)
   const ramp = isComposite(palette) ? null : palette
@@ -95,9 +98,35 @@ export function CubeView({ cube, plane, onPlane, palette, onRetry }: Props) {
   const available = cube.planes
   const selected = available.find((entry) => entry.index === plane) ?? available[0] ?? null
   const position = selected ? available.findIndex((entry) => entry.index === selected.index) : -1
+  const allPlanesLoaded = available.length > 0 && ready >= available.length
+  const playback = playing && !showComposite && allPlanesLoaded
+
+  // Auto-advance through the wavelengths, same cadence as the date plate.
+  useEffect(() => {
+    if (!playback || position < 0) return
+    const timer = window.setInterval(() => {
+      const next = available[position + 1]
+      if (next) onPlane(next.index)
+    }, 500)
+    return () => window.clearInterval(timer)
+  }, [playback, position, available, onPlane])
+
+  // Stop at the last wavelength rather than looping silently forever.
+  useEffect(() => {
+    if (playback && position >= available.length - 1) {
+      const timer = window.setTimeout(() => setPlaying(false), 500)
+      return () => window.clearTimeout(timer)
+    }
+  }, [playback, position, available.length])
+
+  // The composite is one static image; there is nothing to play through.
+  useEffect(() => {
+    if (showComposite) setPlaying(false)
+  }, [showComposite])
 
   const step = (delta: number) => {
     if (position < 0) return
+    setPlaying(false)
     const next = available[position + delta]
     if (next) onPlane(next.index)
   }
@@ -135,6 +164,7 @@ export function CubeView({ cube, plane, onPlane, palette, onRetry }: Props) {
                 frames={planeFrames}
                 index={position < 0 ? 0 : position}
                 palette={ramp}
+                tint={tint}
                 label={
                   selected
                     ? `${cube.name} at ${selected.wavelength_um.toFixed(3)} micrometres`
@@ -180,6 +210,15 @@ export function CubeView({ cube, plane, onPlane, palette, onRetry }: Props) {
               </button>
               <button
                 type="button"
+                className="transport-btn transport-btn--play"
+                onClick={() => setPlaying(!playing)}
+                disabled={!allPlanesLoaded}
+                aria-label={playing ? 'pause' : 'play'}
+              >
+                {playing ? '❙❙' : '▶'}
+              </button>
+              <button
+                type="button"
                 className="transport-btn"
                 onClick={() => step(1)}
                 aria-label="next wavelength"
@@ -200,6 +239,7 @@ export function CubeView({ cube, plane, onPlane, palette, onRetry }: Props) {
                 max={Math.max(available.length - 1, 0)}
                 value={position < 0 ? 0 : position}
                 onChange={(event) => {
+                  setPlaying(false)
                   const next = available[Number(event.target.value)]
                   if (next) onPlane(next.index)
                 }}

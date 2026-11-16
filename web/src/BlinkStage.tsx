@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 
 import { PlateCanvas } from './PlateCanvas'
 import type { Colormap } from './colormaps'
+import type { Tint } from './colorAdjust'
 import { useGreyFrames } from './useGreyFrames'
 
 /**
@@ -22,6 +23,7 @@ type Props = {
   onPlayingChange: (playing: boolean) => void
   onReadyChange?: (ready: boolean) => void
   palette: Colormap
+  tint?: Tint
 }
 
 export function BlinkStage({
@@ -34,6 +36,7 @@ export function BlinkStage({
   onPlayingChange,
   onReadyChange,
   palette,
+  tint,
 }: Props) {
   const { frames, ready, failed } = useGreyFrames(sources)
   const allLoaded = sources.length > 0 && ready >= sources.length
@@ -65,7 +68,13 @@ export function BlinkStage({
 
   return (
     <div className="frame">
-      <PlateCanvas frames={frames} index={index} palette={palette} label={labels[index] ?? 'frame'} />
+      <PlateCanvas
+        frames={frames}
+        index={index}
+        palette={palette}
+        tint={tint}
+        label={labels[index] ?? 'frame'}
+      />
       {currentFailed && <div className="frame-badge frame-badge--bad">frame unavailable</div>}
       {loading && (
         <div className="frame-badge">

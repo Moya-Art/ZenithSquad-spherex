@@ -5,7 +5,7 @@
 
 .app {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
 }
 
@@ -143,33 +143,38 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid transparent;
+  height: 28px;
+  padding: 0 11px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
   border-radius: 2px;
-  color: var(--text-muted);
-  font-size: 11px;
+  color: var(--accent);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
 }
 
 .nav-btn:hover,
 .nav-btn.is-open {
-  background: var(--bg-hover);
-  border-color: var(--border-strong);
+  background: var(--accent-strong);
+  border-color: var(--accent);
   color: var(--text);
 }
 
 .nav-caret {
-  color: var(--text-faint);
+  color: currentColor;
   font-size: 8px;
+  opacity: 0.8;
 }
 
 .nav-badge {
   min-width: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: var(--accent-dim);
-  color: var(--accent);
+  background: var(--accent);
+  color: #0b0b0d;
   font-size: 9.5px;
+  font-weight: 600;
   line-height: 15px;
   text-align: center;
 }
@@ -358,15 +363,19 @@
 
 /* ---------- workspace ---------- */
 
+/* The right column runs the full height: plates and tracks on the left, sidebar beside both. */
 .workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--sidebar-w);
+  grid-template-rows: minmax(0, 1fr) auto;
   min-height: 0;
   min-width: 0;
 }
 
 .stage {
   display: grid;
+  grid-column: 1;
+  grid-row: 1;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1px;
   min-height: 0;
@@ -456,33 +465,6 @@
   border-color: var(--bad);
 }
 
-/* A state where the image would be, so "no data" never reads as an empty image. */
-.plate-state {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin: auto;
-  max-width: 340px;
-  padding: 16px 18px;
-  background: var(--bg-raised);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 11.5px;
-}
-
-.plate-state--decision {
-  border-left: 2px solid var(--accent);
-}
-
-.plate-state-title {
-  color: var(--text);
-  font-size: 12.5px;
-}
-
-.plate-state-body {
-  line-height: 1.55;
-}
-
 .plate-note {
   margin: 0;
   color: var(--text-faint);
@@ -566,6 +548,8 @@
 .sidebar {
   display: flex;
   flex-direction: column;
+  grid-column: 2;
+  grid-row: 1 / -1;
   min-height: 0;
   padding: 14px;
   background: var(--bg-panel);
@@ -593,6 +577,153 @@
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid var(--border);
+}
+
+/* Colour adjust: background/highlight map plus per-channel gains. */
+.sidebar-tint {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.tint-color-row {
+  display: grid;
+  grid-template-columns: 64px 30px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+}
+
+.tint-color {
+  width: 26px;
+  height: 20px;
+  padding: 0;
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-strong);
+  border-radius: 2px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.tint-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.tint-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 1px;
+}
+
+.tint-row {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.tint-row--wide {
+  grid-template-columns: 54px minmax(0, 1fr) 30px;
+}
+
+/* Grey-level threshold. */
+.threshold {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.threshold-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tint-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.tint-toggle input {
+  accent-color: var(--accent);
+}
+
+.threshold-modes {
+  display: flex;
+  gap: 1px;
+}
+
+.threshold-mode {
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 2px;
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.threshold-mode:hover {
+  background: var(--bg-hover);
+  color: var(--text-muted);
+}
+
+.threshold-mode.is-active {
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.tint-label {
+  color: var(--text-faint);
+  font-size: 9.5px;
+}
+
+.tint-slider {
+  width: 100%;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.tint-value {
+  color: var(--text-muted);
+  font-size: 9.5px;
+  text-align: right;
+}
+
+.tint-foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.tint-reset {
+  flex: none;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--text-muted);
+  font-size: 9.5px;
+}
+
+.tint-reset:hover:not(:disabled) {
+  border-color: var(--accent-line);
+  color: var(--accent);
+}
+
+.tint-reset:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tint-note {
+  color: var(--text-faint);
+  font-size: 9.5px;
+  line-height: 1.4;
 }
 
 /* ---------- inspector (epoch block) ---------- */
@@ -766,9 +897,12 @@
 
 /* ---------- tracks ---------- */
 
+/* Sits under the plates, in the left column only; the sidebar runs past it to the footer. */
 .tracks {
   display: flex;
   flex-direction: column;
+  grid-column: 1;
+  grid-row: 2;
   max-height: var(--track-max);
   min-height: 0;
   background: var(--bg-panel);
@@ -816,15 +950,24 @@
 }
 
 .track-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   min-height: 0;
   overflow-y: auto;
 }
 
-.track {
-  border-top: 1px solid var(--border);
+.track-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
 }
 
-.track:first-child {
+.track-col + .track-col {
+  border-left: 1px solid var(--border);
+}
+
+.track {
   border-top: none;
 }
 
@@ -941,8 +1084,12 @@
 /* ---------- notices ---------- */
 
 .notice {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   margin: auto;
-  max-width: 380px;
+  width: min(100%, 360px);
+  max-width: 360px;
   padding: 14px 16px;
   background: var(--bg-raised);
   border: 1px solid var(--border);
@@ -955,9 +1102,8 @@
 }
 
 .notice-title {
-  margin-bottom: 6px;
   color: var(--text);
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
 .notice-body {
@@ -965,26 +1111,26 @@
 }
 
 .notice-elapsed {
-  margin-top: 8px;
-  color: var(--text-muted);
+  color: var(--text-faint);
   font-size: 10.5px;
 }
 
 .notice-action {
-  margin-top: 10px;
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid var(--border);
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 5px 11px;
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-line);
   border-radius: 4px;
-  color: var(--text);
+  color: var(--accent);
   font: inherit;
   font-size: 11px;
   cursor: pointer;
 }
 
 .notice-action:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--accent-strong);
+  color: var(--text);
 }
 
 /* ---------- a build in flight ---------- */
@@ -1081,6 +1227,20 @@
     overflow: visible;
   }
 
+  .tracks {
+    flex: none;
+    max-height: none;
+  }
+
+  .track-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .track-col + .track-col {
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+
   .sidebar {
     flex: none;
     display: block;
@@ -1090,7 +1250,8 @@
     border-top: 1px solid var(--border);
   }
 
-  .sidebar-colour {
+  .sidebar-colour,
+  .sidebar-tint {
     margin-top: 16px;
     padding-top: 14px;
     border-top: 1px solid var(--border);
