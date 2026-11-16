@@ -22,6 +22,11 @@ from pathlib import Path
 
 DEFAULT_ROOT = "data/cache/api"
 
+# Bumped whenever the rendered pixels change (a new stretch, a new encoder setting). It is part of
+# every key, so old entries stop being reachable instead of being served with the old contrast — a
+# cache that answers with the previous renderer makes a rendering fix look broken.
+RENDER_VERSION = 2
+
 
 def _digest(text: str) -> str:
     return hashlib.sha1(text.encode("utf-8")).hexdigest()[:20]
@@ -29,16 +34,16 @@ def _digest(text: str) -> str:
 
 def sequence_key(ra: float, dec: float, band: str, size_deg: float) -> str:
     # The field size is formatted too: 0.3 and 0.30 are the same request and must not be two entries.
-    return _digest(f"{ra:.5f}:{dec:.5f}:{band}:{size_deg:.3f}")
+    return _digest(f"v{RENDER_VERSION}:{ra:.5f}:{dec:.5f}:{band}:{size_deg:.3f}")
 
 
 def frame_key(obs_id: str, ra: float, dec: float, size_deg: float) -> str:
-    return _digest(f"{obs_id}:{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
+    return _digest(f"v{RENDER_VERSION}:{obs_id}:{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
 
 
 def cube_key(ra: float, dec: float, size_deg: float) -> str:
     """No band: a cube is the whole spectrum at one position, which is the point of it."""
-    return _digest(f"{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
+    return _digest(f"v{RENDER_VERSION}:{ra:.5f}:{dec:.5f}:{size_deg:.3f}")
 
 
 class Cache:

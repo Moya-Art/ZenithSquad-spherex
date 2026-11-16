@@ -2,7 +2,8 @@
 
 import json
 
-from api.app.cache import Cache, frame_key, sequence_key
+from api.app import cache as cache_module
+from api.app.cache import Cache, cube_key, frame_key, sequence_key
 
 
 def test_a_key_is_deterministic():
@@ -35,6 +36,19 @@ def test_band_and_size_are_part_of_the_key():
     base = sequence_key(10.0, 0.0, "D6", 0.3)
     assert base != sequence_key(10.0, 0.0, "D1", 0.3)
     assert base != sequence_key(10.0, 0.0, "D6", 0.2)
+
+
+def test_the_render_version_is_part_of_every_key(monkeypatch):
+    """A rendering change must retire every cached pixel, including the single frames `/preview`
+    serves: those are never expired, so a stale one would outlive the fix."""
+    before = (sequence_key(10.0, 0.0, "D6", 0.3), frame_key("obs", 10.0, 0.0, 0.3),
+              cube_key(10.0, 0.0, 0.3))
+
+    monkeypatch.setattr(cache_module, "RENDER_VERSION", cache_module.RENDER_VERSION + 1)
+    after = (sequence_key(10.0, 0.0, "D6", 0.3), frame_key("obs", 10.0, 0.0, 0.3),
+             cube_key(10.0, 0.0, 0.3))
+
+    assert all(old != new for old, new in zip(before, after))
 
 
 def test_a_manifest_is_a_miss_then_a_hit(tmp_path):

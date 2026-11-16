@@ -23,6 +23,44 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7 corrections, backend A — one contrast curve — 2026-11-16
+
+Merged in [#13](https://github.com/Moya-Art/ZenithSquad-spherex/pull/13). Squash-merged onto `main`.
+
+### Changed
+
+- `pipeline/render.py` gains `to_uint8_asinh`, moved verbatim out of `pipeline/cube.py`. The cube
+  imports it and its local copy is gone, so there is one curve and the date plate and the wavelength
+  plate cannot drift apart. `to_uint8` stays: `scripts/preview_targets.py` still uses the linear clip
+  for the Phase 1 preview PNGs, which are not the app.
+- `pipeline/sequence.py` renders its frames with `asinh`. The stretch is untouched — still global over
+  the sequence, still excluding the 12 px target disc — and `measure.py` reads the native image, so
+  motion, flux and SNR are numerically identical. Only the PNG/WebP pixels change.
+- `api/app/cache.py` gains `RENDER_VERSION = 2`, part of `sequence_key`, `cube_key` **and**
+  `frame_key`. Old entries become unreachable rather than being served with the old contrast. The
+  ~6.2 MB already under `data/cache/api` is orphaned; nothing reads it again.
+- `data/fallback/sequence/r_dra_{D1,D6}` — 41 frames rebuilt with the new curve.
+
+### Measured
+
+- r_dra D1: 21 dates, `vmin = 0.024220` `vmax = 3.985226` MJy/sr before and after — the stretch did
+  not move. Frame bytes 12,162 → 12,676.
+- r_dra D6: 20 dates, `vmin = -0.034568` `vmax = 7.990590`, 16,152 → 16,908 B. Every frame still
+  ≤ 60 KB.
+- One D1 frame, 88 × 80 px: mean 48.0 → 51.2 (0–255), p10 8 → 9. The faint field lifts, the bright end
+  compresses — the reason for the change.
+
+### Plan changes
+
+- §4 Data rules, new bullet **"One curve for both modes"**: dates and wavelengths both render through
+  `render.to_uint8_asinh`. Before, §4 required only a *global* stretch, which both modes satisfied
+  with different curves.
+- `Docs/phase-7-corrections.md` §1.1 said to put `RENDER_VERSION` in `sequence_key` and `cube_key`.
+  It is in `frame_key` too, because `/preview` serves bytes cached under that key and they never
+  expire: bumping two of three keys would leave already-seen frames rendering with the old curve.
+
+---
+
 ## Phase 6 — Spectrum and colour (102 bands) — 2026-11-15
 
 Merged in [#12](https://github.com/Moya-Art/ZenithSquad-spherex/pull/12). Squash-merged onto `main`.

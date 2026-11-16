@@ -35,7 +35,7 @@ from pipeline.flags import (
 from pipeline.flags import bad_fraction as frame_bad_fraction
 from pipeline.fits_io import load_cutout
 from pipeline.measure import TargetOutsideFrame, measure_frame, sky_offset
-from pipeline.render import global_stretch, save_webp, to_uint8
+from pipeline.render import global_stretch, save_webp, to_uint8_asinh
 
 DEFAULT_SIZE_DEG = 0.3
 DEFAULT_WORKERS = 8
@@ -372,7 +372,7 @@ def build_from_position(
     webp_sizes = {}
     for (ref, _cutout, _measurement), frame in zip(measurements, crop):
         name = f"{stem}_{ref.date.isoformat()}.webp"
-        webp_sizes[ref.date] = save_webp(to_uint8(frame, vmin, vmax), out_dir / name)
+        webp_sizes[ref.date] = save_webp(to_uint8_asinh(frame, vmin, vmax), out_dir / name)
 
     pixel_scale = float(
         np.sqrt(abs(np.linalg.det(measurements[0][1].wcs.pixel_scale_matrix))) * 3600

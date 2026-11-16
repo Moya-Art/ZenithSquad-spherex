@@ -48,6 +48,21 @@ def to_uint8(image: np.ndarray, vmin: float, vmax: float) -> np.ndarray:
     return np.flipud(np.rint(scaled * 255.0).astype(np.uint8))
 
 
+def to_uint8_asinh(image: np.ndarray, vmin: float, vmax: float) -> np.ndarray:
+    """`asinh` between vmin and vmax, which is what IRSA itself uses for these tiles
+    (`hips_pixel_function`) and is the only monotonic stretch that survives a range this wide.
+
+    Both the date sequence and the wavelength cube render through this, so the two plates of one
+    page agree about what "bright" means. A linear clip is kept above for the Phase 1 preview PNGs,
+    which are not the app.
+    """
+    span = max(vmax - vmin, 1e-9)
+    scaled = np.arcsinh((np.where(np.isfinite(image), image, vmin) - vmin) / span)
+    ceiling = np.arcsinh(1.0)
+    scaled = np.clip(scaled / ceiling, 0.0, 1.0)
+    return np.flipud(np.rint(scaled * 255.0).astype(np.uint8))
+
+
 def save_webp(pixels: np.ndarray, path: str | Path, max_bytes: int = MAX_BYTES) -> int:
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
