@@ -283,7 +283,7 @@ def read_queue(response: Response) -> dict:
     return {"jobs": service.queue_state()}
 
 
-@app.get("/healthz")
+@app.get("/health")
 def healthz() -> dict:
     """Liveness, plus whether the archive has answered and the cache can be written."""
     return {**service.health(), "version": APP_VERSION}

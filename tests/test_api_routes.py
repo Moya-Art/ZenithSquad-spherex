@@ -180,8 +180,8 @@ def test_the_cube_route_asks_for_a_position(client):
     assert client.get("/cube", params={"ra": 10}).status_code == 422
 
 
-def test_healthz_names_the_archive_and_the_cache(client):
-    body = client.get("/healthz").json()
+def test_health_names_the_archive_and_the_cache(client):
+    body = client.get("/health").json()
 
     for key in (
         "status",
@@ -265,7 +265,7 @@ def test_no_route_ever_answers_with_fits(client, monkeypatch):
             params={"obs_id": "obs-a", "ra": 248.16775, "dec": 66.75497, "band": "D1", "size": 0.3},
         ),
         client.get("/cube", params={"ra": 1, "dec": 2}),
-        client.get("/healthz"),
+        client.get("/health"),
     ]
 
     for response in responses:
