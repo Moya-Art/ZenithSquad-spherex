@@ -258,3 +258,42 @@ def test_a_plane_survives_the_instance_that_built_it(tmp_path, monkeypatch):
     assert [name for name in store.gets if name.endswith(".webp")] == [
         f"cubes/{key}/cube/plane_007.webp"
     ]
+
+
+def _coordinate_cube(target="ra269.4540_dec4.6934"):
+    return {
+        "target": target,
+        "ra": 269.45402,
+        "dec": 4.69336,
+        "size_deg": 0.3,
+        "planes": [{"index": 92, "file": "cube_plane_092.webp"}],
+        "composite": {"file": "cube_rgb.webp"},
+    }
+
+
+def test_a_coordinate_cube_does_not_hand_out_its_label_as_a_target():
+    """A cube built for a bare coordinate carries `ra269.4540_dec4.6934` as its display target. The
+    routes validate `target` as a slug from /targets, so passing it on made all 102 plane URLs a 422
+    the API generated for its own browser."""
+    decorated = service._decorate_cube(_coordinate_cube(), "hit")
+
+    assert "target=" not in decorated["planes"][0]["url"]
+    assert "target=" not in decorated["composite"]["url"]
+    # The label is still what the page shows; only the query parameter is wrong for it.
+    assert decorated["target"] == "ra269.4540_dec4.6934"
+
+
+def test_a_committed_cube_still_carries_its_slug():
+    decorated = service._decorate_cube(_coordinate_cube(target="barnard"), "committed")
+
+    assert "target=barnard" in decorated["planes"][0]["url"]
+    assert "target=barnard" in decorated["composite"]["url"]
+
+
+def test_the_urls_a_cube_hands_out_are_addressable(client):
+    """The invariant behind the 422s: whatever this decorator emits must not be rejected by the
+    router that serves it. A 404 means "not built yet" and is fine; 422 means it was never reachable."""
+    decorated = service._decorate_cube(_coordinate_cube(), "hit")
+
+    for url in (decorated["planes"][0]["url"], decorated["composite"]["url"]):
+        assert client.get(url).status_code != 422, url

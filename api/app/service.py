@@ -326,17 +326,22 @@ def _decorate_cube(manifest: dict, source: str) -> dict:
     decorated["source"] = source
     ra, dec = manifest.get("ra"), manifest.get("dec")
     size_deg = manifest.get("size_deg", DEFAULT_SIZE_DEG)
+    # `target` in a URL means "a slug from /targets", and the routes validate it as one. A cube built
+    # for a bare coordinate carries its display label here (`ra269.4540_dec4.6934`), which is not a
+    # slug: passing it on made every plane and composite URL a 422 the API handed to its own browser.
+    # The URLs already carry ra/dec, so a coordinate needs no target at all.
     target = manifest.get("target")
+    slug = target if target and find_target(target) else None
     if ra is None or dec is None:
         return decorated
     decorated["planes"] = [
-        {**plane, "url": cube_plane_path(plane["index"], ra, dec, size_deg, target)}
+        {**plane, "url": cube_plane_path(plane["index"], ra, dec, size_deg, slug)}
         for plane in manifest.get("planes", [])
     ]
     if manifest.get("composite"):
         decorated["composite"] = {
             **manifest["composite"],
-            "url": cube_composite_path(ra, dec, size_deg, target),
+            "url": cube_composite_path(ra, dec, size_deg, slug),
         }
     return decorated
 

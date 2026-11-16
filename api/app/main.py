@@ -34,7 +34,7 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s %(message)s",
 )
 
-APP_VERSION = "0.8.0"
+APP_VERSION = "0.8.1"
 
 MANIFEST_MAX_AGE = 3600
 FRAME_MAX_AGE = service.IMMUTABLE_SECONDS
