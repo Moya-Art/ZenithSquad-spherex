@@ -34,24 +34,24 @@ class _Bucket:
         self.name = name
         self.objects = {}
         self.fail_on = set()
-        self.reloads = 0
 
     def blob(self, name):
         return _Blob(self, name)
-
-    def reload(self):
-        self.reloads += 1
-        raise Forbidden("no permission")
 
 
 class _Client:
     def __init__(self):
         self.buckets = {}
+        self.listing_fails = False
+        self.listings = 0
 
     def bucket(self, name):
         return self.buckets.setdefault(name, _Bucket(name))
 
-    def list_blobs(self, bucket_name, prefix=""):
+    def list_blobs(self, bucket_name, prefix="", max_results=None):
+        self.listings += 1
+        if self.listing_fails:
+            raise Forbidden("no permission")
         bucket = self.bucket(bucket_name)
         for name in sorted(bucket.objects):
             if name.startswith(prefix):
@@ -134,16 +134,29 @@ def test_a_failed_upload_is_counted_and_not_raised():
 
 
 def test_ping_reports_an_unreachable_bucket_as_false():
-    store, _ = _store()
+    client = _Client()
+    client.listing_fails = True
+    store = GcsStore("test-bucket", client=client)
 
     assert store.ping() is False
 
 
+def test_ping_uses_a_listing_not_a_metadata_read():
+    """`bucket.reload()` needs storage.buckets.get, which a bucket-scoped object role does not grant:
+    it reported a working bucket as unreachable on the deployed service."""
+    client = _Client()
+    store = GcsStore("test-bucket", client=client)
+
+    assert store.ping() is True
+    assert client.listings == 1
+
+
 def test_ping_is_cached_so_health_does_not_hammer_the_bucket():
-    store, bucket = _store()
+    client = _Client()
+    store = GcsStore("test-bucket", client=client)
 
     store.ping()
     store.ping()
     store.ping()
 
-    assert bucket.reloads == 1
+    assert client.listings == 1

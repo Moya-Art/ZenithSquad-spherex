@@ -126,7 +126,11 @@ class GcsStore:
         if self._pinged is not None and now - self._pinged_at < PING_TTL_SECONDS:
             return self._pinged
         try:
-            self._get_bucket().reload()
+            # A listing, not a bucket metadata read. `bucket.reload()` needs `storage.buckets.get`,
+            # which a bucket-scoped object role does not grant — it would report a perfectly working
+            # bucket as unreachable. `storage.objects.list` is in the role the service actually has.
+            client = self._client or self._get_bucket().client
+            next(iter(client.list_blobs(self.bucket_name, max_results=1)), None)
             value = True
         except Exception as error:  # noqa: BLE001 - a claim about reachability, not a crash
             _log.warning("bucket %s not reachable: %s", self.bucket_name, error)
