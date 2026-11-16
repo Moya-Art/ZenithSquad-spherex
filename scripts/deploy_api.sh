@@ -10,6 +10,8 @@ set -euo pipefail
 PROJECT="${PROJECT:-zenith-squad-2026}"
 REGION="${REGION:-us-central1}"
 SERVICE="${SERVICE:-spherex-api}"
+# Its own identity, not the Compute Engine default: exactly storage.objectAdmin on one bucket.
+SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-spherex-api@zenith-squad-2026.iam.gserviceaccount.com}"
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO"
@@ -28,6 +30,7 @@ echo "==> deploying $SERVICE in $REGION"
 gcloud run deploy "$SERVICE" \
   --image "$IMAGE" \
   --region "$REGION" \
+  --service-account "$SERVICE_ACCOUNT" \
   --allow-unauthenticated \
   --port 8080 \
   --memory 4Gi --cpu 1 --concurrency 4 --timeout 600 \

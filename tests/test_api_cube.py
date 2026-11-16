@@ -4,9 +4,13 @@ A real cold cube is a 306 MiB download, so nothing here may reach the pipeline: 
 at the `service` boundary, which is the convention `test_api_routes.py` already uses for `/frames`.
 """
 
+import shutil
+
 import pytest
+from conftest import FakeStore
 from fastapi.testclient import TestClient
 
+from api.app import cache as cache_module
 from api.app import main, service
 
 WEBP = b"RIFF\x00\x00\x00\x00WEBPVP8 "
@@ -224,3 +228,33 @@ def test_a_failed_cube_build_keeps_what_it_downloaded(build_env, monkeypatch):
     progress = service.Cache().progress("key-a")
     assert progress["state"] == "failed"
     assert "bytes_freed" not in progress
+
+
+def test_a_plane_survives_the_instance_that_built_it(tmp_path, monkeypatch):
+    """A new instance starts with an empty disk, so a plane must come from the store — one plane, not
+    the cube's 103 files, because hydrating an artifact on every request is the cost this avoids."""
+    store = FakeStore()
+    monkeypatch.setenv("API_CACHE_DIR", str(tmp_path))
+    monkeypatch.setattr(cache_module, "default_store", lambda: store)
+
+    key = service.cube_key(248.16, 66.75, 0.3)
+    builder = service.Cache()
+    builder.put_cube_manifest(key, {
+        "composite": {"file": "rgb.webp"},
+        "planes": [{"index": 7, "file": "plane_007.webp"}],
+    })
+    plane = builder.cube_file(key, "plane_007.webp")
+    plane.parent.mkdir(parents=True, exist_ok=True)
+    plane.write_bytes(WEBP)
+    builder.publish_cube(key)
+
+    shutil.rmtree(tmp_path)  # the instance died and took /tmp with it
+    tmp_path.mkdir()
+
+    data, state = service.cube_plane_webp(7, 248.16, 66.75, 0.3)
+
+    assert data == WEBP
+    assert state == "hit"
+    assert [name for name in store.gets if name.endswith(".webp")] == [
+        f"cubes/{key}/cube/plane_007.webp"
+    ]

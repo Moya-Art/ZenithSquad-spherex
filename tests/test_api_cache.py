@@ -2,6 +2,8 @@
 
 import json
 
+from conftest import FakeStore
+
 from api.app import cache as cache_module
 from api.app.cache import Cache, cube_key, frame_key, sequence_key
 
@@ -83,3 +85,90 @@ def test_frames_are_a_miss_then_a_hit_and_land_where_sequence_frames_do(tmp_path
 
 def test_the_cache_reports_whether_it_can_be_written(tmp_path):
     assert Cache(tmp_path / "fresh").writable() is True
+
+
+# --- the bucket ---------------------------------------------------------------------------------
+
+
+def test_a_manifest_is_published_under_its_path(tmp_path):
+    store = FakeStore()
+    key = sequence_key(10.0, 0.0, "D6", 0.3)
+
+    Cache(tmp_path, store=store).put_manifest(key, {"frames": []})
+
+    assert store.objects[f"seq/{key}/manifest.json"] == b'{"frames": []}'
+
+
+def test_a_restarted_instance_answers_from_the_store(tmp_path):
+    """The whole feature, in one assertion: an instance that never wrote this sequence still serves it
+    — and keeps a local copy so the next read costs nothing."""
+    store = FakeStore()
+    key = sequence_key(10.0, 0.0, "D6", 0.3)
+    Cache(tmp_path / "first", store=store).put_manifest(key, {"target": "x", "frames": []})
+
+    second = Cache(tmp_path / "second", store=store)
+
+    assert second.manifest(key) == {"target": "x", "frames": []}
+    assert (second.sequence_dir(key) / "manifest.json").exists()
+
+
+def test_frames_read_through_the_store(tmp_path):
+    store = FakeStore()
+    key = frame_key("obs", 10.0, 0.0, 0.3)
+    Cache(tmp_path / "a", store=store).put_frame(key, b"RIFF-webp")
+
+    assert Cache(tmp_path / "b", store=store).frame(key) == b"RIFF-webp"
+
+
+def test_ensure_local_downloads_a_file_once(tmp_path):
+    store = FakeStore()
+    key = cube_key(10.0, 0.0, 0.3)
+    builder = Cache(tmp_path / "a", store=store)
+    path = builder.cube_file(key, "plane_003.webp")
+    path.parent.mkdir(parents=True)
+    path.write_bytes(b"RIFF")
+    builder.publish_cube(key)
+
+    other = Cache(tmp_path / "b", store=store)
+    target = other.cube_file(key, "plane_003.webp")
+    before = len(store.gets)
+
+    other.ensure_local(target)
+    other.ensure_local(target)
+
+    assert target.read_bytes() == b"RIFF"
+    assert len(store.gets) - before == 1
+
+
+def test_a_publish_failure_does_not_break_the_local_write(tmp_path):
+    """A bucket outage costs durability, not the request: the file is already on disk."""
+
+    class Broken(FakeStore):
+        def put_bytes(self, name, data):
+            raise RuntimeError("bucket down")
+
+    cache = Cache(tmp_path, store=Broken())
+    key = sequence_key(10.0, 0.0, "D6", 0.3)
+
+    cache.put_manifest(key, {"frames": []})
+
+    assert cache.manifest(key) == {"frames": []}
+
+
+def test_progress_uploads_are_throttled_but_a_final_state_goes_at_once(tmp_path):
+    store = FakeStore()
+    cache = Cache(tmp_path, store=store)
+    key = cube_key(10.0, 0.0, 0.3)
+    uploads = lambda: [name for name in store.puts if name.endswith("progress.json")]  # noqa: E731
+
+    cache.put_progress(key, {"state": "building", "stage": "downloading_tile"})
+    cache.put_progress(key, {"state": "building", "stage": "rendering_planes"})
+
+    assert len(uploads()) == 1
+
+    cache.put_progress(key, {"state": "done"})
+
+    # The final state must be durable immediately: a restarted instance reading a two-second-old
+    # "building" would keep a dead job on the queue.
+    assert len(uploads()) == 2
+    assert cache.progress(key)["state"] == "done"
