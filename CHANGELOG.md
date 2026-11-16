@@ -23,6 +23,28 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7b — the frontend shell, joined to `main` — 2026-11-16
+
+Merged in [#18](https://github.com/Moya-Art/ZenithSquad-spherex/pull/18). Squash-merged onto `main`.
+
+### Added
+- One page, two plates. A navbar with a coordinate field per axis, Targets and Queue pop-overs; a scrolling epoch and palette sidebar; a read-only track stack; a footer. The Time/Spectrum modes and the left rail are gone.
+- `web/src/viewState.ts` carries the coordinate and nothing else: `?ra=&dec=` at five decimals — the rounding the cache key already uses — so a shared link and the request it triggers always name the same entry. A missing, half or out-of-range coordinate is rejected before any request is made.
+- `web/src/resolveTarget.ts`: a coordinate within `1e-4°` (≈0.36″) of a named target resolves to it. That is what lets a coordinate-only URL fall back to the committed artifact, and it is tight enough that no two of the five targets can be confused.
+- `vitest`, with 15 tests over `viewState` and `resolveTarget`.
+
+### Changed
+- The greyscale decoder and the palette canvas are shared by both plates. Every frame is recoloured offscreen before play is enabled, so the blink does not flicker. Turbo leaves the palette list; the RGB composite takes its slot and affects only the wavelength plate.
+- The wavelength plate loads on demand unless a committed cube exists, so opening the page never queues a 306 MiB build by itself.
+
+### Fixed
+- `/queue` had been written twice — here and in #14. The merge keeps `main`'s: one route, one `queue_state()`, one set of progress records carrying the coordinate. The branch's duplicate is removed, and its two assertions (a listing carries neither `planes` nor `points`; the name comes off the progress record) move into `main`'s suite.
+
+### Plan changes
+- §1.4 assigned the queue endpoint to the frontend half of gate B. #14 shipped it first, so the frontend's own implementation was dropped rather than merged. Nothing else in the plan moved.
+
+---
+
 ## Phase 8a — the other four targets, prebuilt — 2026-11-16
 
 Merged in [#16](https://github.com/Moya-Art/ZenithSquad-spherex/pull/16). Squash-merged onto `main`.
