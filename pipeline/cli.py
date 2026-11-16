@@ -69,6 +69,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     cube.add_argument("--targets", default="data/targets.json")
     cube.add_argument("--refresh", action="store_true", help="re-download the tile")
 
+    cache = subparsers.add_parser("cache", help="the downloaded ingredients: report or delete them")
+    cache_subparsers = cache.add_subparsers(dest="cache_command", required=True)
+    purge = cache_subparsers.add_parser("purge", help="delete raw FITS downloads, keeping artefacts")
+    purge.add_argument("--raw", action="store_true", help="the per-date cutouts in --cache")
+    purge.add_argument("--tiles", action="store_true", help="the all-sky cube tiles")
+    purge.add_argument(
+        "--keep", type=int, default=0, metavar="N",
+        help="with --tiles, keep the N most recently modified tiles (default 0)",
+    )
+    purge.add_argument("--cache", default="data/cache", help="where the cutouts live")
+    purge.add_argument("--tiles-dir", default="data/cache/cube_tiles", help="where the tiles live")
+
     return parser.parse_args(argv)
 
 
@@ -408,6 +420,54 @@ def print_cube(manifest: dict) -> None:
         print(f"blank planes: {manifest['blank_planes']} (dichroic channels, no data by design)")
 
 
+def size_text(size: int) -> str:
+    if size >= 1e9:
+        return f"{size / 1e9:.2f} GB"
+    if size >= 1e6:
+        return f"{size / 1e6:.1f} MB"
+    return f"{size:,} B"
+
+
+def run_cache_purge(args: argparse.Namespace) -> int:
+    """Delete the raw FITS downloads, keeping every artefact built from them."""
+    from pathlib import Path
+
+    from pipeline.cleanup import delete_raw
+
+    if not (args.raw or args.tiles):
+        print("give --raw, --tiles, or both", file=sys.stderr)
+        return EXIT_USAGE
+    if args.keep < 0:
+        print("--keep cannot be negative", file=sys.stderr)
+        return EXIT_USAGE
+
+    groups: list[tuple[str, list[Path]]] = []
+    if args.raw:
+        # Non-recursive on purpose: the tile directory and the API cache are their own questions.
+        groups.append(("cutouts", sorted(Path(args.cache).glob("*.fits"))))
+    if args.tiles:
+        tiles = sorted(
+            Path(args.tiles_dir).glob("*.fits"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+        if args.keep and tiles:
+            print(
+                "keeping the newest tile(s): "
+                + ", ".join(path.name for path in tiles[: args.keep]),
+                file=sys.stderr,
+            )
+        groups.append(("tiles", tiles[args.keep:]))
+
+    total = 0
+    for label, paths in groups:
+        freed = delete_raw(paths)
+        total += freed
+        print(f"{label}: {len(paths)} file(s), {size_text(freed)} freed")
+    print(f"total: {size_text(total)} freed")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     if args.command == "timeline":
@@ -416,6 +476,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_build(args)
     if args.command == "cube":
         return run_cube(args)
+    if args.command == "cache":
+        return run_cache_purge(args)
     return EXIT_USAGE
 
 

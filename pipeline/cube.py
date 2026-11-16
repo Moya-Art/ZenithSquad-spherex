@@ -517,11 +517,15 @@ def rgb_composite(window: TileWindow, indices: list[int]) -> np.ndarray:
     return np.stack(channels, axis=-1)
 
 
-def build_cube(request: CubeRequest, progress=None) -> dict:
+def build_cube(request: CubeRequest, progress=None,
+               raw_paths: list[Path] | None = None) -> dict:
     """Build one patch: download the tile if needed, then write planes one at a time.
 
     `progress` receives a dict rather than a line of text, because the API publishes these numbers to
     a waiting visitor: stage, planes_done, planes_total, bytes_done, bytes_total, message.
+
+    `raw_paths` is where the tile this build used is reported, so a caller can delete it once the
+    planes exist. The tile is 306 MiB and nothing reads it after the build.
     """
     def report(**update):
         if progress:
@@ -561,6 +565,8 @@ def build_cube(request: CubeRequest, progress=None) -> dict:
                        progress=lambda update: report(
                            planes_done=0, planes_total=depth,
                            message="Downloading one all-sky cube tile", **update))
+    if raw_paths is not None:
+        raw_paths.append(path)
 
     window = read_window(path, SkyCoord(ra, dec, unit="deg"), request.size_deg, tile=tile,
                          mosaic_epoch=mosaic_epoch, remote_bytes=path.stat().st_size)

@@ -23,6 +23,66 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7 corrections, backend C — delete the raw downloads — 2026-11-16
+
+Merged in [#15](https://github.com/Moya-Art/ZenithSquad-spherex/pull/15). Squash-merged onto `main`.
+
+### Added
+
+- `pipeline/cleanup.py` — `delete_raw(paths) -> int`. Explicit paths only (a glob would delete another
+  build's inputs) and raw suffixes only (`.fits`/`.fit`/`.part`), so a mistaken list cannot take a
+  WebP, a manifest or a `progress.json` with it. A missing file is not an error; a failed unlink is
+  skipped rather than turned into a build failure.
+- `python -m pipeline.cli cache purge --raw --tiles --keep N` — the hand cleanup for what is already on
+  disk, printing bytes freed per group and a total. `--raw` is non-recursive on `data/cache`, so the
+  tile directory and the API cache stay separate questions. Neither flag is a usage error (exit 3).
+- `tests/test_cleanup.py` — 6 tests: bytes counted, missing file tolerated, non-raw refused, `.part`
+  accepted, duplicates counted once, a directory skipped.
+
+### Changed
+
+- `pipeline/sequence.py` and `pipeline/cube.py` report the paths they actually downloaded through a
+  `raw_paths` list. It is filled in, not returned: the builder has no business deciding whether its
+  ingredients are still wanted.
+- `api/app/service.py` deletes them after a successful build — after the manifest and the WebPs are on
+  disk, never on a failure (debugging an archive failure needs the file that failed). The cube's final
+  `progress.json` records `bytes_freed`.
+- `api/app/main.py` configures logging at `LOG_LEVEL` (default `INFO`). Uvicorn sets up its own loggers
+  and leaves the root alone, so the freed-bytes record was being written to a logger nobody reads.
+- `APP_VERSION` 0.6.0 → 0.7.0.
+
+### Measured
+
+- Live `/frames?target=r_dra&band=D1`: `X-Cache: miss`, 21 dates, `data/cache/*.fits` **333 → 312**,
+  second request `X-Cache: hit`.
+- Live `/frames?target=r_dra&band=D6`: `freed 88 208 640 bytes of raw downloads` (20 cutouts),
+  **312 → 292** files.
+- `cache purge --keep 1` on throwaway files: cutouts gone, newest tile kept, `manifest.json`,
+  `progress.json` and `data/cache/api/` untouched.
+
+### Result of the one-off purge
+
+`python -m pipeline.cli cache purge --raw --tiles --keep 1` on the working copy:
+
+- cutouts: **292 files, 1.29 GB freed**
+- tiles: **5 files, 1.60 GB freed**
+- total: **2.90 GB freed**, `data/cache` **3.1 GB → 314 MB**
+
+The kept tile is `hips_20261026_N5_277.fits` (the most recently modified, RW Aurigae's). The five
+targets are still answerable without it: `r_dra` from the committed artifact and the other four from
+the API cube cache (7.2 MB, untouched). Every artefact under `data/fallback/` is untouched.
+
+### Plan changes
+
+- §5 repository tree gains `pipeline/cleanup.py`; §6 Phase 5 route table gains `GET /queue`; §6 Phase 6
+  gains item 7, "delete the tile once the planes exist".
+- `Docs/phase-7-corrections.md` §3.2 says every downloader returns its paths. They report them into a
+  `raw_paths` list instead — one signature change fewer for the CLI, which must keep its ingredients.
+- `Docs/phase-7-corrections.md` §3.1 lists `delete_raw` with no suffix guard. It refuses anything that
+  is not raw, which is the cheapest way to make "delete raw" mean exactly that.
+
+---
+
 ## Phase 7 corrections, backend B — `GET /queue` — 2026-11-16
 
 Merged in [#14](https://github.com/Moya-Art/ZenithSquad-spherex/pull/14). Squash-merged onto `main`.
