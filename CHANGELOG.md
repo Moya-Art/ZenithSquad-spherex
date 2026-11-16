@@ -23,6 +23,18 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7c — the health route — 2026-11-16
+
+Merged in [#19](https://github.com/Moya-Art/ZenithSquad-spherex/pull/19). Squash-merged onto `main`.
+
+### Fixed
+- `/healthz` never reached the API on Cloud Run: Google's frontend answers that path itself, before the container. Confirmed from outside — `/healthz` returns an HTML `404 … That's all we know.` with no `x-cloud-trace-context`, while a path FastAPI does not serve returns its own JSON 404 with the header. The route is now `/health`, same body. Nothing referenced the old name, and no alias is left behind.
+
+### Plan changes
+- The Phase 8 gate written as "done when `/healthz` reports the bucket" now reads `/health`. It could never have been observed at the old path on Cloud Run.
+
+---
+
 ## Phase 7b — the frontend shell, joined to `main` — 2026-11-16
 
 Merged in [#18](https://github.com/Moya-Art/ZenithSquad-spherex/pull/18). Squash-merged onto `main`.
