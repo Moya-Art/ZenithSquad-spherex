@@ -77,6 +77,65 @@ Merged in [#18](https://github.com/Moya-Art/ZenithSquad-spherex/pull/18). Squash
 
 ---
 
+## Phase 8c — the bucket: durable cache — 2026-11-16
+
+Merged in [#21](https://github.com/Moya-Art/ZenithSquad-spherex/pull/21). Squash-merged onto `main`.
+Cloud Run revision `spherex-api-00004-vcv`, `APP_VERSION` 0.8.0.
+
+### Added
+
+- `api/app/store.py` — `LocalStore`, `GcsStore`, `default_store()`. The store sits *behind* `Cache`,
+  not beside it: object names are the path relative to the cache root, so there is one naming rule
+  (`seq/<key>/manifest.json`, `cubes/<key>/cube/plane_007.webp`, `frames/<key>.webp`) and no second
+  layout to keep in step. With `GCS_BUCKET` unset the store is a no-op, which is what local development
+  and the test suite run on.
+- `Cache.ensure_local()`, `Cache.publish_sequence()`, `Cache.publish_cube()`; read-through on
+  `manifest`, `frame`, `cube_manifest` and `progress`.
+- Bucket `gs://zenith-squad-2026-artifacts` (us-central1, private, uniform bucket-level access) and a
+  dedicated service account `spherex-api@zenith-squad-2026.iam.gserviceaccount.com` with
+  `roles/storage.objectAdmin` **on that bucket only**. Cloud Run now runs as it (`--service-account`
+  in `scripts/deploy_api.sh`) instead of the Compute Engine default account.
+- `tests/test_store.py` — 9 tests against a fake client; read-through across two cache roots, a failed
+  upload that must not fail the request, progress throttling, and a plane served after the instance
+  that built it is gone. 158 tests total, all green with `GCS_BUCKET` unset.
+
+### Fixed
+
+- `GcsStore.ping()` used `bucket.reload()`, which needs `storage.buckets.get` — a permission
+  `objectAdmin` does not carry, because it is scoped to objects. On the deployed service this reported
+  `bucket_reachable: false` for a bucket that had just accepted 22 objects. It now probes with a
+  one-object listing (`storage.objects.list`, inside the role), and a test pins the distinction.
+
+### Measured
+
+| What | Before | After |
+|---|---|---|
+| `/frames?target=wise0855&band=D5`, cold | 1 m 06 s | — (published once) |
+| Same request on a **new revision** (empty `/tmp`) | 1 m 06 s | **0,5 s**, `x-cache: hit` |
+| `/cube?ra=133.9&dec=-7.3`, cold | ~90 s (plan estimate) | **11 s**, 109 objects published |
+| Same cube after a forced restart | full rebuild | 1,4 s `ready/hit`, plane 0,55 s, composite 0,50 s |
+
+The 11 s is the interesting number: the plan estimated ~90 s for a cold cube from the local
+measurement, but S3→Cloud Run moves the 306 MiB tile far faster than a home connection does, so a
+cold cube in production is cheap. `/health` now reports `bucket_reachable: true`.
+
+### Plan changes
+
+- **Object naming.** `BUILD_PLAN.md` §Phase 8 asks for `previews/ cube/ manifests/ tiles/ cache/`. The
+  bucket instead mirrors the local cache tree (`seq/`, `frames/`, `cubes/`), because that tree is what
+  the pipeline writes into: one name per object beats a translation table between two layouts.
+- **Tiles are not in the bucket** (decision taken before the work). They are ingredients, they are
+  deleted after a build, and a rendered cube makes a rebuild rare. The plan's `tiles/` prefix is
+  therefore not used.
+- **The cold-cube estimate above was wrong** and is corrected here rather than left in the doc.
+
+### Still open
+
+Bucket, deployment and refresh are now three of six Phase 8 items. Unbuilt: `jobs/refresh.py`, Cloud
+Scheduler, `POST /refresh`.
+
+---
+
 ## Phase 8a — the other four targets, prebuilt — 2026-11-16
 
 Merged in [#16](https://github.com/Moya-Art/ZenithSquad-spherex/pull/16). Squash-merged onto `main`.
