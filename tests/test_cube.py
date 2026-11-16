@@ -23,8 +23,8 @@ from pipeline.cube import (
     spectrum_gear,
     spectrum_point,
     tile_for,
-    to_uint8_asinh,
 )
+from pipeline.render import to_uint8_asinh
 
 PIXEL_SCALE = 12.883
 WAVELENGTHS = 0.753 + np.arange(102) * (4.988 - 0.753) / 101

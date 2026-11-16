@@ -7,7 +7,7 @@
   "vmax": 7.990589609270199,
   "pixscale_arcsec": 6.158,
   "generated_by": "python -m pipeline.cli build --target r_dra --band D6",
-  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated, so only a lower flux bound exists. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
+  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated (only a lower flux bound exists) or that the target fell outside a clipped cutout, in which case measure_skipped says so. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
   "collection": "spherex_dr1",
   "band_wavelength_um": [
     4.42,
@@ -16,6 +16,33 @@
   "built": "2026-11-15",
   "n_frames": 20,
   "n_bands_available": 6,
+  "available_bands": {
+    "D1": {
+      "frames": 67,
+      "dates": 21
+    },
+    "D2": {
+      "frames": 70,
+      "dates": 19
+    },
+    "D3": {
+      "frames": 71,
+      "dates": 20
+    },
+    "D4": {
+      "frames": 65,
+      "dates": 21
+    },
+    "D5": {
+      "frames": 70,
+      "dates": 19
+    },
+    "D6": {
+      "frames": 70,
+      "dates": 20
+    }
+  },
+  "position_note": "Position propagated with the catalogue proper motion of the named target.",
   "saturated_any": true,
   "frames": [
     {
@@ -23,8 +50,9 @@
       "t_min": 60811.955829,
       "obs_id": "2025W20_2D_0243_1",
       "file": "r_dra_D6_2025-05-16.webp",
-      "bytes": 852,
+      "bytes": 914,
       "bad_fraction": 0.02872,
+      "measure_skipped": null,
       "outlier": {
         "mean": 4.0699,
         "median": 0.087901,
@@ -39,8 +67,9 @@
       "t_min": 60815.69268,
       "obs_id": "2025W21_1B_0329_1",
       "file": "r_dra_D6_2025-05-20.webp",
-      "bytes": 694,
+      "bytes": 766,
       "bad_fraction": 0.02245,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.07534,
         "median": 0.058625,
@@ -55,8 +84,9 @@
       "t_min": 60828.12619,
       "obs_id": "2025W23_1C_0021_1",
       "file": "r_dra_D6_2025-06-02.webp",
-      "bytes": 694,
+      "bytes": 736,
       "bad_fraction": 0.0282,
+      "measure_skipped": null,
       "outlier": {
         "mean": 3.51127,
         "median": 0.032719,
@@ -71,8 +101,9 @@
       "t_min": 60831.186215,
       "obs_id": "2025W23_1C_0607_3",
       "file": "r_dra_D6_2025-06-05.webp",
-      "bytes": 692,
+      "bytes": 744,
       "bad_fraction": 0.02232,
+      "measure_skipped": null,
       "outlier": {
         "mean": 5.256294,
         "median": 0.042992,
@@ -87,8 +118,9 @@
       "t_min": 60832.136834,
       "obs_id": "2025W23_2B_0129_2",
       "file": "r_dra_D6_2025-06-06.webp",
-      "bytes": 704,
+      "bytes": 734,
       "bad_fraction": 0.01697,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.826307,
         "median": 0.047893,
@@ -103,8 +135,9 @@
       "t_min": 60837.301931,
       "obs_id": "2025W24_1A_0457_1",
       "file": "r_dra_D6_2025-06-11.webp",
-      "bytes": 782,
+      "bytes": 820,
       "bad_fraction": 0.02895,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.082609,
         "median": 0.02766,
@@ -119,8 +152,9 @@
       "t_min": 60838.25287,
       "obs_id": "2025W24_1A_0631_1",
       "file": "r_dra_D6_2025-06-12.webp",
-      "bytes": 802,
+      "bytes": 828,
       "bad_fraction": 0.02336,
+      "measure_skipped": null,
       "outlier": {
         "mean": 3.215782,
         "median": 0.030833,
@@ -135,8 +169,9 @@
       "t_min": 61035.218053,
       "obs_id": "2025W52_2A_0161_2",
       "file": "r_dra_D6_2025-12-26.webp",
-      "bytes": 910,
+      "bytes": 950,
       "bad_fraction": 0.02251,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.633897,
         "median": 0.024097,
@@ -151,8 +186,9 @@
       "t_min": 61039.152063,
       "obs_id": "2026W01_1A_0257_1",
       "file": "r_dra_D6_2025-12-30.webp",
-      "bytes": 936,
+      "bytes": 958,
       "bad_fraction": 0.03127,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.399079,
         "median": 0.026848,
@@ -167,8 +203,9 @@
       "t_min": 61040.581643,
       "obs_id": "2026W01_1A_0534_3",
       "file": "r_dra_D6_2025-12-31.webp",
-      "bytes": 694,
+      "bytes": 742,
       "bad_fraction": 0.02617,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.17607,
         "median": 0.030306,
@@ -183,8 +220,9 @@
       "t_min": 61041.189044,
       "obs_id": "2026W01_1A_0656_1",
       "file": "r_dra_D6_2026-01-01.webp",
-      "bytes": 820,
+      "bytes": 844,
       "bad_fraction": 0.04123,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.925669,
         "median": 0.034543,
@@ -199,8 +237,9 @@
       "t_min": 61043.567307,
       "obs_id": "2026W01_2A_0426_1",
       "file": "r_dra_D6_2026-01-03.webp",
-      "bytes": 732,
+      "bytes": 764,
       "bad_fraction": 0.02294,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.690604,
         "median": 0.026746,
@@ -215,8 +254,9 @@
       "t_min": 61053.410149,
       "obs_id": "2026W03_1A_0304_1",
       "file": "r_dra_D6_2026-01-13.webp",
-      "bytes": 814,
+      "bytes": 866,
       "bad_fraction": 0.02258,
+      "measure_skipped": null,
       "outlier": {
         "mean": 3.435064,
         "median": 0.035286,
@@ -231,8 +271,9 @@
       "t_min": 61152.331052,
       "obs_id": "2026W17_1B_0434_1",
       "file": "r_dra_D6_2026-04-22.webp",
-      "bytes": 924,
+      "bytes": 950,
       "bad_fraction": 0.02389,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.261961,
         "median": 0.027114,
@@ -247,8 +288,9 @@
       "t_min": 61154.638397,
       "obs_id": "2026W17_2A_0255_1",
       "file": "r_dra_D6_2026-04-24.webp",
-      "bytes": 1012,
+      "bytes": 1072,
       "bad_fraction": 0.05077,
+      "measure_skipped": null,
       "outlier": {
         "mean": 3.306003,
         "median": 0.038717,
@@ -263,8 +305,9 @@
       "t_min": 61166.253201,
       "obs_id": "2026W19_1A_0842_1",
       "file": "r_dra_D6_2026-05-06.webp",
-      "bytes": 848,
+      "bytes": 850,
       "bad_fraction": 0.02117,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.823573,
         "median": 0.030303,
@@ -279,8 +322,9 @@
       "t_min": 61169.988973,
       "obs_id": "2026W19_2A_0976_1",
       "file": "r_dra_D6_2026-05-09.webp",
-      "bytes": 778,
+      "bytes": 820,
       "bad_fraction": 0.02186,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.780481,
         "median": 0.035653,
@@ -295,8 +339,9 @@
       "t_min": 61170.800582,
       "obs_id": "2026W19_2A_1286_1",
       "file": "r_dra_D6_2026-05-10.webp",
-      "bytes": 824,
+      "bytes": 850,
       "bad_fraction": 0.03411,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.931696,
         "median": 0.039358,
@@ -311,8 +356,9 @@
       "t_min": 61171.275048,
       "obs_id": "2026W20_1A_0101_1",
       "file": "r_dra_D6_2026-05-11.webp",
-      "bytes": 822,
+      "bytes": 872,
       "bad_fraction": 0.02895,
+      "measure_skipped": null,
       "outlier": {
         "mean": 1.552149,
         "median": 0.039956,
@@ -327,8 +373,9 @@
       "t_min": 61173.244185,
       "obs_id": "2026W20_1A_0795_1",
       "file": "r_dra_D6_2026-05-13.webp",
-      "bytes": 818,
+      "bytes": 828,
       "bad_fraction": 0.02633,
+      "measure_skipped": null,
       "outlier": {
         "mean": 2.412624,
         "median": 0.044577,

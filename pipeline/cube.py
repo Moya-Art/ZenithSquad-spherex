@@ -52,7 +52,7 @@ from photutils.aperture import (
 
 from pipeline import catalog
 from pipeline.fits_io import check_bunit
-from pipeline.render import global_stretch, save_webp
+from pipeline.render import global_stretch, save_webp, to_uint8_asinh
 from pipeline.sequence import PositionSpec
 
 S3_BUCKET = "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com"
@@ -417,16 +417,6 @@ def read_window(path: str | Path, sky: SkyCoord, size_deg: float,
         remote_bytes=remote_bytes,
         mosaic_epoch=mosaic_epoch,
     )
-
-
-def to_uint8_asinh(image: np.ndarray, vmin: float, vmax: float) -> np.ndarray:
-    """`asinh` between vmin and vmax, which is what IRSA itself uses for these tiles
-    (`hips_pixel_function`) and is the only monotonic stretch that survives a range this wide."""
-    span = max(vmax - vmin, 1e-9)
-    scaled = np.arcsinh((np.where(np.isfinite(image), image, vmin) - vmin) / span)
-    ceiling = np.arcsinh(1.0)
-    scaled = np.clip(scaled / ceiling, 0.0, 1.0)
-    return np.flipud(np.rint(scaled * 255.0).astype(np.uint8))
 
 
 def coverage(hits: np.ndarray) -> float:
