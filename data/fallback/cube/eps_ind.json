@@ -1,0 +1,2028 @@
+{
+  "state": "ready",
+  "target": "eps_ind",
+  "name": "Epsilon Indi B",
+  "ra": 330.892225,
+  "dec": -56.804173,
+  "size_deg": 0.3,
+  "crop_px": 160,
+  "crop_arcmin": 34.35,
+  "pixscale_arcsec": 12.883,
+  "target_xy": [
+    80.17,
+    83.2
+  ],
+  "tile": {
+    "norder": 5,
+    "ipix": 11391,
+    "dirid": 10000,
+    "version": "hips_20261026",
+    "url": "https://nasa-irsa-spherex.s3.us-east-1.amazonaws.com/dr1/hips5_cube/hips_20261026/Norder5/Dir10000/Npix11391_cube.fits",
+    "bytes": 320909760,
+    "shape": [
+      512,
+      512
+    ],
+    "crop": [
+      352,
+      512,
+      43,
+      203
+    ],
+    "mosaic_epoch": 2025.84
+  },
+  "stretch": {
+    "mode": "asinh",
+    "vmin": 0.008825,
+    "vmax": 2.01706
+  },
+  "planes": [
+    {
+      "index": 0,
+      "band": "D1",
+      "detector": 1,
+      "channel": 1,
+      "wavelength_um": 0.753,
+      "bandwidth_um": 0.018,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 28,
+      "bytes": 3696,
+      "file": "eps_ind_plane_000.webp"
+    },
+    {
+      "index": 1,
+      "band": "D1",
+      "detector": 1,
+      "channel": 2,
+      "wavelength_um": 0.771,
+      "bandwidth_um": 0.019,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 3678,
+      "file": "eps_ind_plane_001.webp"
+    },
+    {
+      "index": 2,
+      "band": "D1",
+      "detector": 1,
+      "channel": 3,
+      "wavelength_um": 0.79,
+      "bandwidth_um": 0.019,
+      "blank": false,
+      "coverage": 0.9994,
+      "nan_pixels": 16,
+      "bytes": 3944,
+      "file": "eps_ind_plane_002.webp"
+    },
+    {
+      "index": 3,
+      "band": "D1",
+      "detector": 1,
+      "channel": 4,
+      "wavelength_um": 0.809,
+      "bandwidth_um": 0.02,
+      "blank": false,
+      "coverage": 0.999,
+      "nan_pixels": 25,
+      "bytes": 5840,
+      "file": "eps_ind_plane_003.webp"
+    },
+    {
+      "index": 4,
+      "band": "D1",
+      "detector": 1,
+      "channel": 5,
+      "wavelength_um": 0.828,
+      "bandwidth_um": 0.02,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 18,
+      "bytes": 6822,
+      "file": "eps_ind_plane_004.webp"
+    },
+    {
+      "index": 5,
+      "band": "D1",
+      "detector": 1,
+      "channel": 6,
+      "wavelength_um": 0.848,
+      "bandwidth_um": 0.021,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 24,
+      "bytes": 6106,
+      "file": "eps_ind_plane_005.webp"
+    },
+    {
+      "index": 6,
+      "band": "D1",
+      "detector": 1,
+      "channel": 7,
+      "wavelength_um": 0.868,
+      "bandwidth_um": 0.022,
+      "blank": false,
+      "coverage": 0.9994,
+      "nan_pixels": 15,
+      "bytes": 4878,
+      "file": "eps_ind_plane_006.webp"
+    },
+    {
+      "index": 7,
+      "band": "D1",
+      "detector": 1,
+      "channel": 8,
+      "wavelength_um": 0.889,
+      "bandwidth_um": 0.023,
+      "blank": false,
+      "coverage": 0.9984,
+      "nan_pixels": 40,
+      "bytes": 4034,
+      "file": "eps_ind_plane_007.webp"
+    },
+    {
+      "index": 8,
+      "band": "D1",
+      "detector": 1,
+      "channel": 9,
+      "wavelength_um": 0.91,
+      "bandwidth_um": 0.023,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 24,
+      "bytes": 4048,
+      "file": "eps_ind_plane_008.webp"
+    },
+    {
+      "index": 9,
+      "band": "D1",
+      "detector": 1,
+      "channel": 10,
+      "wavelength_um": 0.932,
+      "bandwidth_um": 0.024,
+      "blank": false,
+      "coverage": 0.9986,
+      "nan_pixels": 35,
+      "bytes": 4060,
+      "file": "eps_ind_plane_009.webp"
+    },
+    {
+      "index": 10,
+      "band": "D1",
+      "detector": 1,
+      "channel": 11,
+      "wavelength_um": 0.955,
+      "bandwidth_um": 0.025,
+      "blank": false,
+      "coverage": 0.9986,
+      "nan_pixels": 37,
+      "bytes": 4032,
+      "file": "eps_ind_plane_010.webp"
+    },
+    {
+      "index": 11,
+      "band": "D1",
+      "detector": 1,
+      "channel": 12,
+      "wavelength_um": 0.978,
+      "bandwidth_um": 0.026,
+      "blank": false,
+      "coverage": 0.9988,
+      "nan_pixels": 31,
+      "bytes": 4126,
+      "file": "eps_ind_plane_011.webp"
+    },
+    {
+      "index": 12,
+      "band": "D1",
+      "detector": 1,
+      "channel": 13,
+      "wavelength_um": 1.001,
+      "bandwidth_um": 0.026,
+      "blank": false,
+      "coverage": 0.9988,
+      "nan_pixels": 32,
+      "bytes": 4112,
+      "file": "eps_ind_plane_012.webp"
+    },
+    {
+      "index": 13,
+      "band": "D1",
+      "detector": 1,
+      "channel": 14,
+      "wavelength_um": 1.025,
+      "bandwidth_um": 0.027,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 28,
+      "bytes": 4234,
+      "file": "eps_ind_plane_013.webp"
+    },
+    {
+      "index": 14,
+      "band": "D1",
+      "detector": 1,
+      "channel": 15,
+      "wavelength_um": 1.05,
+      "bandwidth_um": 0.028,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 4740,
+      "file": "eps_ind_plane_014.webp"
+    },
+    {
+      "index": 15,
+      "band": "D1",
+      "detector": 1,
+      "channel": 16,
+      "wavelength_um": 1.075,
+      "bandwidth_um": 0.029,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 11,
+      "bytes": 6978,
+      "file": "eps_ind_plane_015.webp"
+    },
+    {
+      "index": 16,
+      "band": "D1",
+      "detector": 1,
+      "channel": 17,
+      "wavelength_um": 1.102,
+      "bandwidth_um": 0.03,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 8538,
+      "file": "eps_ind_plane_016.webp"
+    },
+    {
+      "index": 17,
+      "band": "D2",
+      "detector": 2,
+      "channel": 1,
+      "wavelength_um": 1.113,
+      "bandwidth_um": 0.026,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 4318,
+      "file": "eps_ind_plane_017.webp"
+    },
+    {
+      "index": 18,
+      "band": "D2",
+      "detector": 2,
+      "channel": 2,
+      "wavelength_um": 1.139,
+      "bandwidth_um": 0.027,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 14,
+      "bytes": 4280,
+      "file": "eps_ind_plane_018.webp"
+    },
+    {
+      "index": 19,
+      "band": "D2",
+      "detector": 2,
+      "channel": 3,
+      "wavelength_um": 1.167,
+      "bandwidth_um": 0.028,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 4192,
+      "file": "eps_ind_plane_019.webp"
+    },
+    {
+      "index": 20,
+      "band": "D2",
+      "detector": 2,
+      "channel": 4,
+      "wavelength_um": 1.195,
+      "bandwidth_um": 0.029,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 4218,
+      "file": "eps_ind_plane_020.webp"
+    },
+    {
+      "index": 21,
+      "band": "D2",
+      "detector": 2,
+      "channel": 5,
+      "wavelength_um": 1.224,
+      "bandwidth_um": 0.03,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 4206,
+      "file": "eps_ind_plane_021.webp"
+    },
+    {
+      "index": 22,
+      "band": "D2",
+      "detector": 2,
+      "channel": 6,
+      "wavelength_um": 1.254,
+      "bandwidth_um": 0.03,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 11,
+      "bytes": 4218,
+      "file": "eps_ind_plane_022.webp"
+    },
+    {
+      "index": 23,
+      "band": "D2",
+      "detector": 2,
+      "channel": 7,
+      "wavelength_um": 1.284,
+      "bandwidth_um": 0.031,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 4308,
+      "file": "eps_ind_plane_023.webp"
+    },
+    {
+      "index": 24,
+      "band": "D2",
+      "detector": 2,
+      "channel": 8,
+      "wavelength_um": 1.315,
+      "bandwidth_um": 0.032,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 23,
+      "bytes": 4360,
+      "file": "eps_ind_plane_024.webp"
+    },
+    {
+      "index": 25,
+      "band": "D2",
+      "detector": 2,
+      "channel": 9,
+      "wavelength_um": 1.346,
+      "bandwidth_um": 0.032,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 4368,
+      "file": "eps_ind_plane_025.webp"
+    },
+    {
+      "index": 26,
+      "band": "D2",
+      "detector": 2,
+      "channel": 10,
+      "wavelength_um": 1.378,
+      "bandwidth_um": 0.033,
+      "blank": false,
+      "coverage": 0.9987,
+      "nan_pixels": 33,
+      "bytes": 4436,
+      "file": "eps_ind_plane_026.webp"
+    },
+    {
+      "index": 27,
+      "band": "D2",
+      "detector": 2,
+      "channel": 11,
+      "wavelength_um": 1.412,
+      "bandwidth_um": 0.034,
+      "blank": false,
+      "coverage": 0.9966,
+      "nan_pixels": 87,
+      "bytes": 4344,
+      "file": "eps_ind_plane_027.webp"
+    },
+    {
+      "index": 28,
+      "band": "D2",
+      "detector": 2,
+      "channel": 12,
+      "wavelength_um": 1.446,
+      "bandwidth_um": 0.035,
+      "blank": false,
+      "coverage": 0.9965,
+      "nan_pixels": 89,
+      "bytes": 4338,
+      "file": "eps_ind_plane_028.webp"
+    },
+    {
+      "index": 29,
+      "band": "D2",
+      "detector": 2,
+      "channel": 13,
+      "wavelength_um": 1.481,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 27,
+      "bytes": 4436,
+      "file": "eps_ind_plane_029.webp"
+    },
+    {
+      "index": 30,
+      "band": "D2",
+      "detector": 2,
+      "channel": 14,
+      "wavelength_um": 1.517,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 11,
+      "bytes": 4448,
+      "file": "eps_ind_plane_030.webp"
+    },
+    {
+      "index": 31,
+      "band": "D2",
+      "detector": 2,
+      "channel": 15,
+      "wavelength_um": 1.554,
+      "bandwidth_um": 0.038,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 4476,
+      "file": "eps_ind_plane_031.webp"
+    },
+    {
+      "index": 32,
+      "band": "D2",
+      "detector": 2,
+      "channel": 16,
+      "wavelength_um": 1.592,
+      "bandwidth_um": 0.039,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 19,
+      "bytes": 4460,
+      "file": "eps_ind_plane_032.webp"
+    },
+    {
+      "index": 33,
+      "band": "D2",
+      "detector": 2,
+      "channel": 17,
+      "wavelength_um": 1.631,
+      "bandwidth_um": 0.039,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 4514,
+      "file": "eps_ind_plane_033.webp"
+    },
+    {
+      "index": 34,
+      "band": "D3",
+      "detector": 3,
+      "channel": 1,
+      "wavelength_um": 1.656,
+      "bandwidth_um": 0.039,
+      "blank": false,
+      "coverage": 0.999,
+      "nan_pixels": 26,
+      "bytes": 4464,
+      "file": "eps_ind_plane_034.webp"
+    },
+    {
+      "index": 35,
+      "band": "D3",
+      "detector": 3,
+      "channel": 2,
+      "wavelength_um": 1.695,
+      "bandwidth_um": 0.041,
+      "blank": false,
+      "coverage": 0.9988,
+      "nan_pixels": 31,
+      "bytes": 4388,
+      "file": "eps_ind_plane_035.webp"
+    },
+    {
+      "index": 36,
+      "band": "D3",
+      "detector": 3,
+      "channel": 3,
+      "wavelength_um": 1.735,
+      "bandwidth_um": 0.042,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 4298,
+      "file": "eps_ind_plane_036.webp"
+    },
+    {
+      "index": 37,
+      "band": "D3",
+      "detector": 3,
+      "channel": 4,
+      "wavelength_um": 1.775,
+      "bandwidth_um": 0.043,
+      "blank": false,
+      "coverage": 0.9992,
+      "nan_pixels": 20,
+      "bytes": 4254,
+      "file": "eps_ind_plane_037.webp"
+    },
+    {
+      "index": 38,
+      "band": "D3",
+      "detector": 3,
+      "channel": 5,
+      "wavelength_um": 1.818,
+      "bandwidth_um": 0.045,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 4180,
+      "file": "eps_ind_plane_038.webp"
+    },
+    {
+      "index": 39,
+      "band": "D3",
+      "detector": 3,
+      "channel": 6,
+      "wavelength_um": 1.861,
+      "bandwidth_um": 0.046,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 9,
+      "bytes": 4160,
+      "file": "eps_ind_plane_039.webp"
+    },
+    {
+      "index": 40,
+      "band": "D3",
+      "detector": 3,
+      "channel": 7,
+      "wavelength_um": 1.905,
+      "bandwidth_um": 0.047,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 4112,
+      "file": "eps_ind_plane_040.webp"
+    },
+    {
+      "index": 41,
+      "band": "D3",
+      "detector": 3,
+      "channel": 8,
+      "wavelength_um": 1.949,
+      "bandwidth_um": 0.048,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 19,
+      "bytes": 4010,
+      "file": "eps_ind_plane_041.webp"
+    },
+    {
+      "index": 42,
+      "band": "D3",
+      "detector": 3,
+      "channel": 9,
+      "wavelength_um": 1.995,
+      "bandwidth_um": 0.049,
+      "blank": false,
+      "coverage": 0.9994,
+      "nan_pixels": 16,
+      "bytes": 3944,
+      "file": "eps_ind_plane_042.webp"
+    },
+    {
+      "index": 43,
+      "band": "D3",
+      "detector": 3,
+      "channel": 10,
+      "wavelength_um": 2.041,
+      "bandwidth_um": 0.051,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 3896,
+      "file": "eps_ind_plane_043.webp"
+    },
+    {
+      "index": 44,
+      "band": "D3",
+      "detector": 3,
+      "channel": 11,
+      "wavelength_um": 2.089,
+      "bandwidth_um": 0.052,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 12,
+      "bytes": 3922,
+      "file": "eps_ind_plane_044.webp"
+    },
+    {
+      "index": 45,
+      "band": "D3",
+      "detector": 3,
+      "channel": 12,
+      "wavelength_um": 2.139,
+      "bandwidth_um": 0.054,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 19,
+      "bytes": 3824,
+      "file": "eps_ind_plane_045.webp"
+    },
+    {
+      "index": 46,
+      "band": "D3",
+      "detector": 3,
+      "channel": 13,
+      "wavelength_um": 2.189,
+      "bandwidth_um": 0.055,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 22,
+      "bytes": 3846,
+      "file": "eps_ind_plane_046.webp"
+    },
+    {
+      "index": 47,
+      "band": "D3",
+      "detector": 3,
+      "channel": 14,
+      "wavelength_um": 2.24,
+      "bandwidth_um": 0.056,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 28,
+      "bytes": 3746,
+      "file": "eps_ind_plane_047.webp"
+    },
+    {
+      "index": 48,
+      "band": "D3",
+      "detector": 3,
+      "channel": 15,
+      "wavelength_um": 2.292,
+      "bandwidth_um": 0.057,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 22,
+      "bytes": 3668,
+      "file": "eps_ind_plane_048.webp"
+    },
+    {
+      "index": 49,
+      "band": "D3",
+      "detector": 3,
+      "channel": 16,
+      "wavelength_um": 2.345,
+      "bandwidth_um": 0.058,
+      "blank": false,
+      "coverage": 0.9993,
+      "nan_pixels": 17,
+      "bytes": 3492,
+      "file": "eps_ind_plane_049.webp"
+    },
+    {
+      "index": 50,
+      "band": "D3",
+      "detector": 3,
+      "channel": 17,
+      "wavelength_um": 2.399,
+      "bandwidth_um": 0.059,
+      "blank": true,
+      "coverage": 0.0,
+      "nan_pixels": 25600,
+      "bytes": 108,
+      "file": "eps_ind_plane_050.webp"
+    },
+    {
+      "index": 51,
+      "band": "D4",
+      "detector": 4,
+      "channel": 1,
+      "wavelength_um": 2.445,
+      "bandwidth_um": 0.058,
+      "blank": true,
+      "coverage": 0.0,
+      "nan_pixels": 25600,
+      "bytes": 108,
+      "file": "eps_ind_plane_051.webp"
+    },
+    {
+      "index": 52,
+      "band": "D4",
+      "detector": 4,
+      "channel": 2,
+      "wavelength_um": 2.506,
+      "bandwidth_um": 0.073,
+      "blank": false,
+      "coverage": 0.9981,
+      "nan_pixels": 49,
+      "bytes": 3266,
+      "file": "eps_ind_plane_052.webp"
+    },
+    {
+      "index": 53,
+      "band": "D4",
+      "detector": 4,
+      "channel": 3,
+      "wavelength_um": 2.575,
+      "bandwidth_um": 0.074,
+      "blank": false,
+      "coverage": 0.9986,
+      "nan_pixels": 35,
+      "bytes": 3190,
+      "file": "eps_ind_plane_053.webp"
+    },
+    {
+      "index": 54,
+      "band": "D4",
+      "detector": 4,
+      "channel": 4,
+      "wavelength_um": 2.646,
+      "bandwidth_um": 0.076,
+      "blank": false,
+      "coverage": 0.9986,
+      "nan_pixels": 37,
+      "bytes": 3132,
+      "file": "eps_ind_plane_054.webp"
+    },
+    {
+      "index": 55,
+      "band": "D4",
+      "detector": 4,
+      "channel": 5,
+      "wavelength_um": 2.719,
+      "bandwidth_um": 0.078,
+      "blank": false,
+      "coverage": 0.9985,
+      "nan_pixels": 39,
+      "bytes": 3134,
+      "file": "eps_ind_plane_055.webp"
+    },
+    {
+      "index": 56,
+      "band": "D4",
+      "detector": 4,
+      "channel": 6,
+      "wavelength_um": 2.794,
+      "bandwidth_um": 0.079,
+      "blank": false,
+      "coverage": 0.9984,
+      "nan_pixels": 42,
+      "bytes": 3068,
+      "file": "eps_ind_plane_056.webp"
+    },
+    {
+      "index": 57,
+      "band": "D4",
+      "detector": 4,
+      "channel": 7,
+      "wavelength_um": 2.871,
+      "bandwidth_um": 0.084,
+      "blank": false,
+      "coverage": 0.9983,
+      "nan_pixels": 44,
+      "bytes": 2918,
+      "file": "eps_ind_plane_057.webp"
+    },
+    {
+      "index": 58,
+      "band": "D4",
+      "detector": 4,
+      "channel": 8,
+      "wavelength_um": 2.951,
+      "bandwidth_um": 0.086,
+      "blank": false,
+      "coverage": 0.9977,
+      "nan_pixels": 59,
+      "bytes": 2828,
+      "file": "eps_ind_plane_058.webp"
+    },
+    {
+      "index": 59,
+      "band": "D4",
+      "detector": 4,
+      "channel": 9,
+      "wavelength_um": 3.033,
+      "bandwidth_um": 0.089,
+      "blank": false,
+      "coverage": 0.9979,
+      "nan_pixels": 53,
+      "bytes": 2772,
+      "file": "eps_ind_plane_059.webp"
+    },
+    {
+      "index": 60,
+      "band": "D4",
+      "detector": 4,
+      "channel": 10,
+      "wavelength_um": 3.118,
+      "bandwidth_um": 0.091,
+      "blank": false,
+      "coverage": 0.9985,
+      "nan_pixels": 38,
+      "bytes": 2744,
+      "file": "eps_ind_plane_060.webp"
+    },
+    {
+      "index": 61,
+      "band": "D4",
+      "detector": 4,
+      "channel": 11,
+      "wavelength_um": 3.204,
+      "bandwidth_um": 0.093,
+      "blank": false,
+      "coverage": 0.9985,
+      "nan_pixels": 38,
+      "bytes": 2612,
+      "file": "eps_ind_plane_061.webp"
+    },
+    {
+      "index": 62,
+      "band": "D4",
+      "detector": 4,
+      "channel": 12,
+      "wavelength_um": 3.293,
+      "bandwidth_um": 0.094,
+      "blank": false,
+      "coverage": 0.9988,
+      "nan_pixels": 30,
+      "bytes": 2454,
+      "file": "eps_ind_plane_062.webp"
+    },
+    {
+      "index": 63,
+      "band": "D4",
+      "detector": 4,
+      "channel": 13,
+      "wavelength_um": 3.383,
+      "bandwidth_um": 0.096,
+      "blank": false,
+      "coverage": 0.9988,
+      "nan_pixels": 31,
+      "bytes": 2516,
+      "file": "eps_ind_plane_063.webp"
+    },
+    {
+      "index": 64,
+      "band": "D4",
+      "detector": 4,
+      "channel": 14,
+      "wavelength_um": 3.476,
+      "bandwidth_um": 0.098,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 28,
+      "bytes": 2464,
+      "file": "eps_ind_plane_064.webp"
+    },
+    {
+      "index": 65,
+      "band": "D4",
+      "detector": 4,
+      "channel": 15,
+      "wavelength_um": 3.57,
+      "bandwidth_um": 0.099,
+      "blank": false,
+      "coverage": 0.999,
+      "nan_pixels": 25,
+      "bytes": 2292,
+      "file": "eps_ind_plane_065.webp"
+    },
+    {
+      "index": 66,
+      "band": "D4",
+      "detector": 4,
+      "channel": 16,
+      "wavelength_um": 3.667,
+      "bandwidth_um": 0.102,
+      "blank": false,
+      "coverage": 0.9989,
+      "nan_pixels": 27,
+      "bytes": 2338,
+      "file": "eps_ind_plane_066.webp"
+    },
+    {
+      "index": 67,
+      "band": "D4",
+      "detector": 4,
+      "channel": 17,
+      "wavelength_um": 3.768,
+      "bandwidth_um": 0.103,
+      "blank": false,
+      "coverage": 0.9985,
+      "nan_pixels": 38,
+      "bytes": 2286,
+      "file": "eps_ind_plane_067.webp"
+    },
+    {
+      "index": 68,
+      "band": "D5",
+      "detector": 5,
+      "channel": 1,
+      "wavelength_um": 3.833,
+      "bandwidth_um": 0.035,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 11,
+      "bytes": 2258,
+      "file": "eps_ind_plane_068.webp"
+    },
+    {
+      "index": 69,
+      "band": "D5",
+      "detector": 5,
+      "channel": 2,
+      "wavelength_um": 3.867,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9982,
+      "nan_pixels": 45,
+      "bytes": 2272,
+      "file": "eps_ind_plane_069.webp"
+    },
+    {
+      "index": 70,
+      "band": "D5",
+      "detector": 5,
+      "channel": 3,
+      "wavelength_um": 3.901,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9994,
+      "nan_pixels": 15,
+      "bytes": 2164,
+      "file": "eps_ind_plane_070.webp"
+    },
+    {
+      "index": 71,
+      "band": "D5",
+      "detector": 5,
+      "channel": 4,
+      "wavelength_um": 3.935,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 2200,
+      "file": "eps_ind_plane_071.webp"
+    },
+    {
+      "index": 72,
+      "band": "D5",
+      "detector": 5,
+      "channel": 5,
+      "wavelength_um": 3.97,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 14,
+      "bytes": 2118,
+      "file": "eps_ind_plane_072.webp"
+    },
+    {
+      "index": 73,
+      "band": "D5",
+      "detector": 5,
+      "channel": 6,
+      "wavelength_um": 4.005,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 2090,
+      "file": "eps_ind_plane_073.webp"
+    },
+    {
+      "index": 74,
+      "band": "D5",
+      "detector": 5,
+      "channel": 7,
+      "wavelength_um": 4.04,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 2088,
+      "file": "eps_ind_plane_074.webp"
+    },
+    {
+      "index": 75,
+      "band": "D5",
+      "detector": 5,
+      "channel": 8,
+      "wavelength_um": 4.076,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 14,
+      "bytes": 2114,
+      "file": "eps_ind_plane_075.webp"
+    },
+    {
+      "index": 76,
+      "band": "D5",
+      "detector": 5,
+      "channel": 9,
+      "wavelength_um": 4.112,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 12,
+      "bytes": 2046,
+      "file": "eps_ind_plane_076.webp"
+    },
+    {
+      "index": 77,
+      "band": "D5",
+      "detector": 5,
+      "channel": 10,
+      "wavelength_um": 4.148,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 12,
+      "bytes": 2164,
+      "file": "eps_ind_plane_077.webp"
+    },
+    {
+      "index": 78,
+      "band": "D5",
+      "detector": 5,
+      "channel": 11,
+      "wavelength_um": 4.184,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.997,
+      "nan_pixels": 78,
+      "bytes": 2218,
+      "file": "eps_ind_plane_078.webp"
+    },
+    {
+      "index": 79,
+      "band": "D5",
+      "detector": 5,
+      "channel": 12,
+      "wavelength_um": 4.22,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9991,
+      "nan_pixels": 22,
+      "bytes": 2082,
+      "file": "eps_ind_plane_079.webp"
+    },
+    {
+      "index": 80,
+      "band": "D5",
+      "detector": 5,
+      "channel": 13,
+      "wavelength_um": 4.257,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 14,
+      "bytes": 2186,
+      "file": "eps_ind_plane_080.webp"
+    },
+    {
+      "index": 81,
+      "band": "D5",
+      "detector": 5,
+      "channel": 14,
+      "wavelength_um": 4.294,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9992,
+      "nan_pixels": 20,
+      "bytes": 2084,
+      "file": "eps_ind_plane_081.webp"
+    },
+    {
+      "index": 82,
+      "band": "D5",
+      "detector": 5,
+      "channel": 15,
+      "wavelength_um": 4.331,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 9,
+      "bytes": 2038,
+      "file": "eps_ind_plane_082.webp"
+    },
+    {
+      "index": 83,
+      "band": "D5",
+      "detector": 5,
+      "channel": 16,
+      "wavelength_um": 4.368,
+      "bandwidth_um": 0.038,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 9,
+      "bytes": 1930,
+      "file": "eps_ind_plane_083.webp"
+    },
+    {
+      "index": 84,
+      "band": "D5",
+      "detector": 5,
+      "channel": 17,
+      "wavelength_um": 4.405,
+      "bandwidth_um": 0.038,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 1902,
+      "file": "eps_ind_plane_084.webp"
+    },
+    {
+      "index": 85,
+      "band": "D6",
+      "detector": 6,
+      "channel": 1,
+      "wavelength_um": 4.435,
+      "bandwidth_um": 0.035,
+      "blank": false,
+      "coverage": 0.9998,
+      "nan_pixels": 6,
+      "bytes": 1994,
+      "file": "eps_ind_plane_085.webp"
+    },
+    {
+      "index": 86,
+      "band": "D6",
+      "detector": 6,
+      "channel": 2,
+      "wavelength_um": 4.467,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9998,
+      "nan_pixels": 6,
+      "bytes": 1920,
+      "file": "eps_ind_plane_086.webp"
+    },
+    {
+      "index": 87,
+      "band": "D6",
+      "detector": 6,
+      "channel": 3,
+      "wavelength_um": 4.5,
+      "bandwidth_um": 0.035,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 1930,
+      "file": "eps_ind_plane_087.webp"
+    },
+    {
+      "index": 88,
+      "band": "D6",
+      "detector": 6,
+      "channel": 4,
+      "wavelength_um": 4.533,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 2042,
+      "file": "eps_ind_plane_088.webp"
+    },
+    {
+      "index": 89,
+      "band": "D6",
+      "detector": 6,
+      "channel": 5,
+      "wavelength_um": 4.566,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 7,
+      "bytes": 1856,
+      "file": "eps_ind_plane_089.webp"
+    },
+    {
+      "index": 90,
+      "band": "D6",
+      "detector": 6,
+      "channel": 6,
+      "wavelength_um": 4.6,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 2010,
+      "file": "eps_ind_plane_090.webp"
+    },
+    {
+      "index": 91,
+      "band": "D6",
+      "detector": 6,
+      "channel": 7,
+      "wavelength_um": 4.635,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 7,
+      "bytes": 1938,
+      "file": "eps_ind_plane_091.webp"
+    },
+    {
+      "index": 92,
+      "band": "D6",
+      "detector": 6,
+      "channel": 8,
+      "wavelength_um": 4.669,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 2128,
+      "file": "eps_ind_plane_092.webp"
+    },
+    {
+      "index": 93,
+      "band": "D6",
+      "detector": 6,
+      "channel": 9,
+      "wavelength_um": 4.704,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 7,
+      "bytes": 2196,
+      "file": "eps_ind_plane_093.webp"
+    },
+    {
+      "index": 94,
+      "band": "D6",
+      "detector": 6,
+      "channel": 10,
+      "wavelength_um": 4.739,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9997,
+      "nan_pixels": 8,
+      "bytes": 2196,
+      "file": "eps_ind_plane_094.webp"
+    },
+    {
+      "index": 95,
+      "band": "D6",
+      "detector": 6,
+      "channel": 11,
+      "wavelength_um": 4.773,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9998,
+      "nan_pixels": 6,
+      "bytes": 2096,
+      "file": "eps_ind_plane_095.webp"
+    },
+    {
+      "index": 96,
+      "band": "D6",
+      "detector": 6,
+      "channel": 12,
+      "wavelength_um": 4.808,
+      "bandwidth_um": 0.036,
+      "blank": false,
+      "coverage": 0.9998,
+      "nan_pixels": 6,
+      "bytes": 2148,
+      "file": "eps_ind_plane_096.webp"
+    },
+    {
+      "index": 97,
+      "band": "D6",
+      "detector": 6,
+      "channel": 13,
+      "wavelength_um": 4.843,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 12,
+      "bytes": 2776,
+      "file": "eps_ind_plane_097.webp"
+    },
+    {
+      "index": 98,
+      "band": "D6",
+      "detector": 6,
+      "channel": 14,
+      "wavelength_um": 4.879,
+      "bandwidth_um": 0.038,
+      "blank": false,
+      "coverage": 0.9995,
+      "nan_pixels": 13,
+      "bytes": 2934,
+      "file": "eps_ind_plane_098.webp"
+    },
+    {
+      "index": 99,
+      "band": "D6",
+      "detector": 6,
+      "channel": 15,
+      "wavelength_um": 4.915,
+      "bandwidth_um": 0.038,
+      "blank": false,
+      "coverage": 0.9996,
+      "nan_pixels": 10,
+      "bytes": 2648,
+      "file": "eps_ind_plane_099.webp"
+    },
+    {
+      "index": 100,
+      "band": "D6",
+      "detector": 6,
+      "channel": 16,
+      "wavelength_um": 4.951,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9998,
+      "nan_pixels": 5,
+      "bytes": 2194,
+      "file": "eps_ind_plane_100.webp"
+    },
+    {
+      "index": 101,
+      "band": "D6",
+      "detector": 6,
+      "channel": 17,
+      "wavelength_um": 4.988,
+      "bandwidth_um": 0.037,
+      "blank": false,
+      "coverage": 0.9999,
+      "nan_pixels": 3,
+      "bytes": 2118,
+      "file": "eps_ind_plane_101.webp"
+    }
+  ],
+  "composite": {
+    "file": "eps_ind_rgb.webp",
+    "bytes": 2818,
+    "channels": [
+      {
+        "channel": "R",
+        "index": 93,
+        "band": "D6",
+        "wavelength_um": 4.704
+      },
+      {
+        "channel": "G",
+        "index": 48,
+        "band": "D3",
+        "wavelength_um": 2.292
+      },
+      {
+        "channel": "B",
+        "index": 8,
+        "band": "D1",
+        "wavelength_um": 0.91
+      }
+    ],
+    "note": "Each channel is stretched on its own: a composite is a false-colour image, not a brightness comparison."
+  },
+  "spectrum": {
+    "unit": "mJy",
+    "aperture_px": 5.0,
+    "annulus_px": [
+      40.0,
+      60.0
+    ],
+    "pixscale_arcsec": 12.883,
+    "peak_index": 101,
+    "points": [
+      {
+        "index": 0,
+        "flux_mjy": 6869.076862,
+        "noise_mjy": 0.636518,
+        "annulus_clipped": false
+      },
+      {
+        "index": 1,
+        "flux_mjy": 5263.500953,
+        "noise_mjy": 0.688888,
+        "annulus_clipped": false
+      },
+      {
+        "index": 2,
+        "flux_mjy": 5755.845889,
+        "noise_mjy": 0.793201,
+        "annulus_clipped": false
+      },
+      {
+        "index": 3,
+        "flux_mjy": 5957.157846,
+        "noise_mjy": 0.790416,
+        "annulus_clipped": false
+      },
+      {
+        "index": 4,
+        "flux_mjy": 5653.58018,
+        "noise_mjy": 9.390201,
+        "annulus_clipped": false
+      },
+      {
+        "index": 5,
+        "flux_mjy": 6652.18361,
+        "noise_mjy": 5.437964,
+        "annulus_clipped": false
+      },
+      {
+        "index": 6,
+        "flux_mjy": 5694.871059,
+        "noise_mjy": 0.690558,
+        "annulus_clipped": false
+      },
+      {
+        "index": 7,
+        "flux_mjy": 5220.249808,
+        "noise_mjy": 0.752244,
+        "annulus_clipped": false
+      },
+      {
+        "index": 8,
+        "flux_mjy": 6485.482924,
+        "noise_mjy": 0.988429,
+        "annulus_clipped": false
+      },
+      {
+        "index": 9,
+        "flux_mjy": 6810.604428,
+        "noise_mjy": 1.056018,
+        "annulus_clipped": false
+      },
+      {
+        "index": 10,
+        "flux_mjy": 6684.238432,
+        "noise_mjy": 1.010985,
+        "annulus_clipped": false
+      },
+      {
+        "index": 11,
+        "flux_mjy": 6958.60412,
+        "noise_mjy": 1.080812,
+        "annulus_clipped": false
+      },
+      {
+        "index": 12,
+        "flux_mjy": 8209.740287,
+        "noise_mjy": 1.188129,
+        "annulus_clipped": false
+      },
+      {
+        "index": 13,
+        "flux_mjy": 7859.145003,
+        "noise_mjy": 0.972155,
+        "annulus_clipped": false
+      },
+      {
+        "index": 14,
+        "flux_mjy": 6228.778481,
+        "noise_mjy": 1.504493,
+        "annulus_clipped": false
+      },
+      {
+        "index": 15,
+        "flux_mjy": 4782.744804,
+        "noise_mjy": 19.253994,
+        "annulus_clipped": false
+      },
+      {
+        "index": 16,
+        "flux_mjy": 5402.777673,
+        "noise_mjy": 16.925856,
+        "annulus_clipped": false
+      },
+      {
+        "index": 17,
+        "flux_mjy": 6109.296345,
+        "noise_mjy": 0.806359,
+        "annulus_clipped": false
+      },
+      {
+        "index": 18,
+        "flux_mjy": 5138.759341,
+        "noise_mjy": 0.574004,
+        "annulus_clipped": false
+      },
+      {
+        "index": 19,
+        "flux_mjy": 5639.972098,
+        "noise_mjy": 0.770324,
+        "annulus_clipped": false
+      },
+      {
+        "index": 20,
+        "flux_mjy": 5555.466745,
+        "noise_mjy": 0.589507,
+        "annulus_clipped": false
+      },
+      {
+        "index": 21,
+        "flux_mjy": 4485.948419,
+        "noise_mjy": 0.477274,
+        "annulus_clipped": false
+      },
+      {
+        "index": 22,
+        "flux_mjy": 5400.829349,
+        "noise_mjy": 0.572095,
+        "annulus_clipped": false
+      },
+      {
+        "index": 23,
+        "flux_mjy": 4654.467919,
+        "noise_mjy": 0.516022,
+        "annulus_clipped": false
+      },
+      {
+        "index": 24,
+        "flux_mjy": 6397.548944,
+        "noise_mjy": 0.596834,
+        "annulus_clipped": false
+      },
+      {
+        "index": 25,
+        "flux_mjy": 4247.091444,
+        "noise_mjy": 0.482336,
+        "annulus_clipped": false
+      },
+      {
+        "index": 26,
+        "flux_mjy": 5204.262649,
+        "noise_mjy": 0.44584,
+        "annulus_clipped": false
+      },
+      {
+        "index": 27,
+        "flux_mjy": 5988.853919,
+        "noise_mjy": 0.600214,
+        "annulus_clipped": false
+      },
+      {
+        "index": 28,
+        "flux_mjy": 5314.446875,
+        "noise_mjy": 0.433147,
+        "annulus_clipped": false
+      },
+      {
+        "index": 29,
+        "flux_mjy": 4745.9799,
+        "noise_mjy": 0.565614,
+        "annulus_clipped": false
+      },
+      {
+        "index": 30,
+        "flux_mjy": 4454.694912,
+        "noise_mjy": 0.440698,
+        "annulus_clipped": false
+      },
+      {
+        "index": 31,
+        "flux_mjy": 5632.958111,
+        "noise_mjy": 0.438701,
+        "annulus_clipped": false
+      },
+      {
+        "index": 32,
+        "flux_mjy": 5821.967738,
+        "noise_mjy": 0.446332,
+        "annulus_clipped": false
+      },
+      {
+        "index": 33,
+        "flux_mjy": 5626.981769,
+        "noise_mjy": 0.593913,
+        "annulus_clipped": false
+      },
+      {
+        "index": 34,
+        "flux_mjy": 6879.115232,
+        "noise_mjy": 0.522501,
+        "annulus_clipped": false
+      },
+      {
+        "index": 35,
+        "flux_mjy": 5925.22613,
+        "noise_mjy": 0.460949,
+        "annulus_clipped": false
+      },
+      {
+        "index": 36,
+        "flux_mjy": 6032.796109,
+        "noise_mjy": 0.435733,
+        "annulus_clipped": false
+      },
+      {
+        "index": 37,
+        "flux_mjy": 5835.647558,
+        "noise_mjy": 0.435232,
+        "annulus_clipped": false
+      },
+      {
+        "index": 38,
+        "flux_mjy": 5623.226968,
+        "noise_mjy": 0.448267,
+        "annulus_clipped": false
+      },
+      {
+        "index": 39,
+        "flux_mjy": 4810.120065,
+        "noise_mjy": 0.379636,
+        "annulus_clipped": false
+      },
+      {
+        "index": 40,
+        "flux_mjy": 4846.306706,
+        "noise_mjy": 0.339986,
+        "annulus_clipped": false
+      },
+      {
+        "index": 41,
+        "flux_mjy": 6482.002042,
+        "noise_mjy": 0.369806,
+        "annulus_clipped": false
+      },
+      {
+        "index": 42,
+        "flux_mjy": 5663.281699,
+        "noise_mjy": 0.373447,
+        "annulus_clipped": false
+      },
+      {
+        "index": 43,
+        "flux_mjy": 4702.552066,
+        "noise_mjy": 0.319786,
+        "annulus_clipped": false
+      },
+      {
+        "index": 44,
+        "flux_mjy": 4426.842123,
+        "noise_mjy": 0.280191,
+        "annulus_clipped": false
+      },
+      {
+        "index": 45,
+        "flux_mjy": 5391.729011,
+        "noise_mjy": 0.323896,
+        "annulus_clipped": false
+      },
+      {
+        "index": 46,
+        "flux_mjy": 6374.14033,
+        "noise_mjy": 0.442337,
+        "annulus_clipped": false
+      },
+      {
+        "index": 47,
+        "flux_mjy": 6189.872791,
+        "noise_mjy": 0.465903,
+        "annulus_clipped": false
+      },
+      {
+        "index": 48,
+        "flux_mjy": 4592.676531,
+        "noise_mjy": 0.37993,
+        "annulus_clipped": false
+      },
+      {
+        "index": 49,
+        "flux_mjy": 3868.197201,
+        "noise_mjy": 0.346395,
+        "annulus_clipped": false
+      },
+      {
+        "index": 50,
+        "flux_mjy": null,
+        "noise_mjy": null,
+        "annulus_clipped": false
+      },
+      {
+        "index": 51,
+        "flux_mjy": null,
+        "noise_mjy": null,
+        "annulus_clipped": false
+      },
+      {
+        "index": 52,
+        "flux_mjy": 2913.047891,
+        "noise_mjy": 0.311444,
+        "annulus_clipped": false
+      },
+      {
+        "index": 53,
+        "flux_mjy": 3311.304232,
+        "noise_mjy": 0.269589,
+        "annulus_clipped": false
+      },
+      {
+        "index": 54,
+        "flux_mjy": 3088.131786,
+        "noise_mjy": 0.308661,
+        "annulus_clipped": false
+      },
+      {
+        "index": 55,
+        "flux_mjy": 3633.964612,
+        "noise_mjy": 0.403883,
+        "annulus_clipped": false
+      },
+      {
+        "index": 56,
+        "flux_mjy": 3183.841513,
+        "noise_mjy": 0.369959,
+        "annulus_clipped": false
+      },
+      {
+        "index": 57,
+        "flux_mjy": 2889.612858,
+        "noise_mjy": 0.297564,
+        "annulus_clipped": false
+      },
+      {
+        "index": 58,
+        "flux_mjy": 2507.568633,
+        "noise_mjy": 0.254068,
+        "annulus_clipped": false
+      },
+      {
+        "index": 59,
+        "flux_mjy": 2652.908789,
+        "noise_mjy": 0.258384,
+        "annulus_clipped": false
+      },
+      {
+        "index": 60,
+        "flux_mjy": 2460.139375,
+        "noise_mjy": 0.24889,
+        "annulus_clipped": false
+      },
+      {
+        "index": 61,
+        "flux_mjy": 2604.974582,
+        "noise_mjy": 0.251931,
+        "annulus_clipped": false
+      },
+      {
+        "index": 62,
+        "flux_mjy": 2533.400887,
+        "noise_mjy": 0.245138,
+        "annulus_clipped": false
+      },
+      {
+        "index": 63,
+        "flux_mjy": 2390.432759,
+        "noise_mjy": 0.236864,
+        "annulus_clipped": false
+      },
+      {
+        "index": 64,
+        "flux_mjy": 2264.731518,
+        "noise_mjy": 0.245678,
+        "annulus_clipped": false
+      },
+      {
+        "index": 65,
+        "flux_mjy": 2526.288816,
+        "noise_mjy": 0.220927,
+        "annulus_clipped": false
+      },
+      {
+        "index": 66,
+        "flux_mjy": 2291.013801,
+        "noise_mjy": 0.215443,
+        "annulus_clipped": false
+      },
+      {
+        "index": 67,
+        "flux_mjy": 2909.983485,
+        "noise_mjy": 0.263752,
+        "annulus_clipped": false
+      },
+      {
+        "index": 68,
+        "flux_mjy": 2962.814364,
+        "noise_mjy": 0.362956,
+        "annulus_clipped": false
+      },
+      {
+        "index": 69,
+        "flux_mjy": 3157.985102,
+        "noise_mjy": 0.398424,
+        "annulus_clipped": false
+      },
+      {
+        "index": 70,
+        "flux_mjy": 3298.494584,
+        "noise_mjy": 0.34331,
+        "annulus_clipped": false
+      },
+      {
+        "index": 71,
+        "flux_mjy": 3605.859215,
+        "noise_mjy": 0.32967,
+        "annulus_clipped": false
+      },
+      {
+        "index": 72,
+        "flux_mjy": 3260.025666,
+        "noise_mjy": 0.353712,
+        "annulus_clipped": false
+      },
+      {
+        "index": 73,
+        "flux_mjy": 3155.219669,
+        "noise_mjy": 0.355292,
+        "annulus_clipped": false
+      },
+      {
+        "index": 74,
+        "flux_mjy": 3529.561715,
+        "noise_mjy": 0.371228,
+        "annulus_clipped": false
+      },
+      {
+        "index": 75,
+        "flux_mjy": 3267.759903,
+        "noise_mjy": 0.388076,
+        "annulus_clipped": false
+      },
+      {
+        "index": 76,
+        "flux_mjy": 2898.081869,
+        "noise_mjy": 0.430899,
+        "annulus_clipped": false
+      },
+      {
+        "index": 77,
+        "flux_mjy": 3177.276777,
+        "noise_mjy": 0.459906,
+        "annulus_clipped": false
+      },
+      {
+        "index": 78,
+        "flux_mjy": 3016.857332,
+        "noise_mjy": 0.499951,
+        "annulus_clipped": false
+      },
+      {
+        "index": 79,
+        "flux_mjy": 3386.731341,
+        "noise_mjy": 0.461625,
+        "annulus_clipped": false
+      },
+      {
+        "index": 80,
+        "flux_mjy": 3757.193124,
+        "noise_mjy": 0.490289,
+        "annulus_clipped": false
+      },
+      {
+        "index": 81,
+        "flux_mjy": 4338.095866,
+        "noise_mjy": 0.448524,
+        "annulus_clipped": false
+      },
+      {
+        "index": 82,
+        "flux_mjy": 4188.134171,
+        "noise_mjy": 0.435076,
+        "annulus_clipped": false
+      },
+      {
+        "index": 83,
+        "flux_mjy": 5508.151178,
+        "noise_mjy": 0.407428,
+        "annulus_clipped": false
+      },
+      {
+        "index": 84,
+        "flux_mjy": 5714.541795,
+        "noise_mjy": 0.397454,
+        "annulus_clipped": false
+      },
+      {
+        "index": 85,
+        "flux_mjy": 8411.886296,
+        "noise_mjy": 0.442047,
+        "annulus_clipped": false
+      },
+      {
+        "index": 86,
+        "flux_mjy": 7149.013628,
+        "noise_mjy": 0.481478,
+        "annulus_clipped": false
+      },
+      {
+        "index": 87,
+        "flux_mjy": 3039.606878,
+        "noise_mjy": 0.468658,
+        "annulus_clipped": false
+      },
+      {
+        "index": 88,
+        "flux_mjy": 2582.896604,
+        "noise_mjy": 0.481652,
+        "annulus_clipped": false
+      },
+      {
+        "index": 89,
+        "flux_mjy": 2428.581185,
+        "noise_mjy": 0.493306,
+        "annulus_clipped": false
+      },
+      {
+        "index": 90,
+        "flux_mjy": 2339.890034,
+        "noise_mjy": 0.479201,
+        "annulus_clipped": false
+      },
+      {
+        "index": 91,
+        "flux_mjy": 4174.051125,
+        "noise_mjy": 0.493561,
+        "annulus_clipped": false
+      },
+      {
+        "index": 92,
+        "flux_mjy": 2103.928534,
+        "noise_mjy": 0.537216,
+        "annulus_clipped": false
+      },
+      {
+        "index": 93,
+        "flux_mjy": 2547.407956,
+        "noise_mjy": 0.554372,
+        "annulus_clipped": false
+      },
+      {
+        "index": 94,
+        "flux_mjy": 2425.046611,
+        "noise_mjy": 0.572589,
+        "annulus_clipped": false
+      },
+      {
+        "index": 95,
+        "flux_mjy": 2454.268291,
+        "noise_mjy": 0.576643,
+        "annulus_clipped": false
+      },
+      {
+        "index": 96,
+        "flux_mjy": 2370.66308,
+        "noise_mjy": 0.603379,
+        "annulus_clipped": false
+      },
+      {
+        "index": 97,
+        "flux_mjy": 2162.214803,
+        "noise_mjy": 0.656391,
+        "annulus_clipped": false
+      },
+      {
+        "index": 98,
+        "flux_mjy": 2592.056593,
+        "noise_mjy": 0.745375,
+        "annulus_clipped": false
+      },
+      {
+        "index": 99,
+        "flux_mjy": 3983.706848,
+        "noise_mjy": 0.738407,
+        "annulus_clipped": false
+      },
+      {
+        "index": 100,
+        "flux_mjy": 6515.923954,
+        "noise_mjy": 0.71544,
+        "annulus_clipped": false
+      },
+      {
+        "index": 101,
+        "flux_mjy": 10383.476686,
+        "noise_mjy": 0.646167,
+        "annulus_clipped": false
+      }
+    ]
+  },
+  "depth": 102,
+  "blank_planes": [
+    50,
+    51
+  ],
+  "notes": {
+    "spectrum": "Quick-look aperture photometry; noise_mjy is a scatter estimate, not a calibrated error.",
+    "position": "Position propagated with catalogue proper motion to the mosaic's mean epoch (2025.84). At 0.0035786 deg/px the cube is coarse, but a fast mover still shifts by more than one cube pixel per decade.",
+    "quality": "Visualization grade, not spectrophotometry: planes and the RGB composite are for looking at, and the spectrum is a quick look from a 5 px aperture with a 40-60 px background annulus. For science numbers use the IRSA SPHEREx Spectrophotometry tool. One asinh stretch is shared by all 102 planes so that stepping through them shows real brightness change. Where the archive stores NaN on a saturated core the pixels are filled from the plane's finite ceiling, so those cores give only a lower bound."
+  },
+  "generated_by": "python -m pipeline.cli cube --target eps_ind",
+  "built": "2026-11-15"
+}

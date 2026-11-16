@@ -1,0 +1,307 @@
+{
+  "target": "barnard",
+  "name": "Barnard's Star",
+  "band": "D3",
+  "size_deg": 0.3,
+  "vmin": 0.03247526407795127,
+  "vmax": 7.887300303551662,
+  "pixscale_arcsec": 6.152,
+  "generated_by": "python -m pipeline.cli build --target barnard --band D3",
+  "note": "One frame per observing date, all sharing the stretch above. Positions are measured on each frame's native pixel grid and compared on the sky. A measure of null means the target core saturated (only a lower flux bound exists) or that the target fell outside a clipped cutout, in which case measure_skipped says so. motion.reliable is false when a saturated core's centroid drifts with the roll angle of each visit.",
+  "collection": "spherex_dr1",
+  "band_wavelength_um": [
+    1.63,
+    2.41
+  ],
+  "built": "2026-11-15",
+  "n_frames": 14,
+  "n_bands_available": 6,
+  "available_bands": {
+    "D1": {
+      "frames": 42,
+      "dates": 10
+    },
+    "D2": {
+      "frames": 38,
+      "dates": 10
+    },
+    "D3": {
+      "frames": 41,
+      "dates": 14
+    },
+    "D4": {
+      "frames": 41,
+      "dates": 10
+    },
+    "D5": {
+      "frames": 38,
+      "dates": 10
+    },
+    "D6": {
+      "frames": 40,
+      "dates": 14
+    }
+  },
+  "position_note": "Position propagated with the catalogue proper motion of the named target.",
+  "saturated_any": true,
+  "frames": [
+    {
+      "date": "2025-08-15",
+      "t_min": 60902.864715,
+      "obs_id": "2025W33_2C_0321_1",
+      "file": "barnard_D3_2025-08-15.webp",
+      "bytes": 2270,
+      "bad_fraction": 0.01861,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.552242,
+        "median": 0.028875,
+        "max_abs": 682.547713
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-08-16",
+      "t_min": 60903.138366,
+      "obs_id": "2025W33_2C_0386_3",
+      "file": "barnard_D3_2025-08-16.webp",
+      "bytes": 2496,
+      "bad_fraction": 0.01719,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.754089,
+        "median": 0.029203,
+        "max_abs": 876.189059
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-08-18",
+      "t_min": 60905.853257,
+      "obs_id": "2025W34_1B_0164_1",
+      "file": "barnard_D3_2025-08-18.webp",
+      "bytes": 2544,
+      "bad_fraction": 0.01913,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.631454,
+        "median": 0.01672,
+        "max_abs": 1019.046013
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-08-21",
+      "t_min": 60908.63919,
+      "obs_id": "2025W34_2B_0030_1",
+      "file": "barnard_D3_2025-08-21.webp",
+      "bytes": 2426,
+      "bad_fraction": 0.01692,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.499049,
+        "median": 0.013615,
+        "max_abs": 771.835879
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-08-25",
+      "t_min": 60912.034425,
+      "obs_id": "2025W35_1A_0008_1",
+      "file": "barnard_D3_2025-08-25.webp",
+      "bytes": 2218,
+      "bad_fraction": 0.0226,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.468098,
+        "median": 0.012136,
+        "max_abs": 598.505941
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2025-08-27",
+      "t_min": 60914.482593,
+      "obs_id": "2025W35_1A_0484_1",
+      "file": "barnard_D3_2025-08-27.webp",
+      "bytes": 2148,
+      "bad_fraction": 0.02318,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.709678,
+        "median": 0.01854,
+        "max_abs": 445.25246
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": true
+    },
+    {
+      "date": "2026-03-19",
+      "t_min": 61118.309231,
+      "obs_id": "2026W12_1A_0598_1",
+      "file": "barnard_D3_2026-03-19.webp",
+      "bytes": 2484,
+      "bad_fraction": 0.07673,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.320332,
+        "median": 0.017058,
+        "max_abs": 446.082625
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-21",
+      "t_min": 61120.278599,
+      "obs_id": "2026W12_2A_0324_1",
+      "file": "barnard_D3_2026-03-21.webp",
+      "bytes": 1918,
+      "bad_fraction": 0.14742,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.486236,
+        "median": 0.023067,
+        "max_abs": 1146.236297
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-22",
+      "t_min": 61121.364125,
+      "obs_id": "2026W12_2A_0520_1",
+      "file": "barnard_D3_2026-03-22.webp",
+      "bytes": 2160,
+      "bad_fraction": 0.40994,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.383871,
+        "median": 0.011939,
+        "max_abs": 839.373008
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-23",
+      "t_min": 61122.654126,
+      "obs_id": "2026W13_1A_0129_1",
+      "file": "barnard_D3_2026-03-23.webp",
+      "bytes": 2168,
+      "bad_fraction": 0.54501,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.612461,
+        "median": 0.039018,
+        "max_abs": 1110.814518
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-03-25",
+      "t_min": 61124.894266,
+      "obs_id": "2026W13_1A_0549_1",
+      "file": "barnard_D3_2026-03-25.webp",
+      "bytes": 2446,
+      "bad_fraction": 0.03676,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.422343,
+        "median": 0.019085,
+        "max_abs": 644.942155
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-04-10",
+      "t_min": 61140.030061,
+      "obs_id": "2026W15_2A_0137_1",
+      "file": "barnard_D3_2026-04-10.webp",
+      "bytes": 2470,
+      "bad_fraction": 0.0264,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.348413,
+        "median": 0.015488,
+        "max_abs": 432.550877
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-05-04",
+      "t_min": 61164.133134,
+      "obs_id": "2026W19_1A_0046_1",
+      "file": "barnard_D3_2026-05-04.webp",
+      "bytes": 2164,
+      "bad_fraction": 0.01978,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.389628,
+        "median": 0.012336,
+        "max_abs": 922.552402
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    },
+    {
+      "date": "2026-05-05",
+      "t_min": 61165.082972,
+      "obs_id": "2026W19_1A_0403_1",
+      "file": "barnard_D3_2026-05-05.webp",
+      "bytes": 2024,
+      "bad_fraction": 0.03247,
+      "measure_skipped": null,
+      "outlier": {
+        "mean": 0.371844,
+        "median": 0.018272,
+        "max_abs": 485.28335
+      },
+      "measure": null,
+      "saturated": true,
+      "centroid_from_prediction": false
+    }
+  ],
+  "motion": {
+    "dx_arcsec": -7.934779555899542,
+    "dy_arcsec": 11.608866782312935,
+    "dt_years": 0.7184061835614557,
+    "slope_arcsec_per_year": [
+      -6.071164700818016,
+      9.885722233638472
+    ],
+    "slope_err": [
+      2.157818015945896,
+      2.436469942483012
+    ],
+    "rms_scatter_arcsec": [
+      2.3164430193981387,
+      2.615579139913748
+    ],
+    "total_arcsec": 14.061526039879528,
+    "significant": true,
+    "reliable": false
+  }
+}
