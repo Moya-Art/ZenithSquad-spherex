@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY pipeline ./pipeline
 COPY api ./api
 COPY data/targets.json ./data/targets.json
+# The committed cubes. Without these, `service.committed_cube` finds nothing and every one of the five
+# targets falls through to a live 306 MiB build the first time it is opened.
+COPY data/fallback/cube ./data/fallback/cube
 
 # The container filesystem is ephemeral, so every cold start begins with an empty cache and pays for
 # a cold /frames build. Phase 8 points these two variables at a bucket instead.
