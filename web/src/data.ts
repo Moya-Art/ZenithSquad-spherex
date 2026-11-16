@@ -199,6 +199,23 @@ export async function loadSequence(
   }
 }
 
+/**
+ * The committed sequence alone, with no API call.
+ *
+ * A named target already has its frames on disk, so the plate opens on real pixels instead of waiting
+ * for a cold build. Same cheap probe as `loadCommittedCube`, which is what the wavelength plate does.
+ */
+export async function loadCommittedSequence(
+  slug: string,
+  band: string,
+): Promise<Sequence | null> {
+  try {
+    return await getJson<Sequence>(`${BASE}data/fallback/sequence/${slug}_${band}.json`)
+  } catch {
+    return null
+  }
+}
+
 export function frameUrl(frame: Frame): string {
   if (frame.url) return absolute(frame.url)
   return `${BASE}data/fallback/sequence/${frame.file}`

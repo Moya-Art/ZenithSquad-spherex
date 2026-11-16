@@ -152,6 +152,13 @@ export function DatePlate({
             </div>
           </div>
 
+          {sequence.stale && (
+            <p className="plate-note">
+              Committed copy of this target, not a live build. It replaces itself if the archive
+              answers.
+            </p>
+          )}
+
           {sequence.position_note && (
             <p className="plate-note">{sequence.position_note}</p>
           )}

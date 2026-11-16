@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import {
   frameUrl,
+  loadCommittedSequence,
   loadSequence,
   type Frame,
   type Sequence,
@@ -40,6 +41,7 @@ export function useSequence(
   dec: number | null,
   band: string | undefined,
   fallback: SequenceFallback | null,
+  settled: boolean,
 ): SequenceLoad {
   const [sequence, setSequence] = useState<Sequence | null>(null)
   const [state, setState] = useState<SequenceState>('idle')
@@ -60,38 +62,63 @@ export function useSequence(
       return
     }
 
+    // Until the target list settles, a coordinate cannot be resolved to a committed artifact, so the
+    // request would leave without its fallback. Nothing is in flight yet, so the plate stays idle
+    // rather than counting seconds it is not spending.
+    if (!settled) return
+
+    const committed: SequenceFallback | null =
+      fallbackSlug && fallbackBand ? { slug: fallbackSlug, band: fallbackBand } : null
+
     let cancelled = false
-    setState('loading')
     setSequence(null)
     setError(null)
     setIndex(0)
     setPlaying(false)
     setReady(false)
+    setState(committed ? 'idle' : 'loading')
 
-    loadSequence(ra, dec, {
-      band,
-      fallback:
-        fallbackSlug && fallbackBand ? { slug: fallbackSlug, band: fallbackBand } : null,
-    })
-      .then((loaded) => {
+    void (async () => {
+      // The committed copy first. It is a local file, so a named target opens on pixels instead of on
+      // a wait; the live request then either replaces it or leaves it standing.
+      let instant: Sequence | null = null
+      if (committed) {
+        instant = await loadCommittedSequence(committed.slug, committed.band)
+        if (cancelled) return
+        if (instant) {
+          setSequence({ ...instant, stale: true })
+          setState('idle')
+        } else {
+          setState('loading')
+        }
+      }
+
+      try {
+        const loaded = await loadSequence(ra, dec, { band, fallback: committed })
         if (cancelled) return
         if (!loaded) {
-          setState('missing')
+          // "Nothing there" only reaches the plate when there is no committed copy on screen.
+          if (!instant) setState('missing')
           return
         }
-        setSequence(loaded)
+        // A live build answers with `source: 'live'`; the committed JSON the loader falls back to does
+        // not. Marking that difference is what keeps the caption honest.
+        setSequence(loaded.source === 'live' ? loaded : { ...loaded, stale: true })
         setState('idle')
-      })
-      .catch((failure: Error) => {
+      } catch (failure) {
         if (cancelled) return
+        // With the committed copy already on screen a failed request is not an error screen: the data
+        // is real, it is just not fresh. The plate says so through `stale`.
+        if (instant) return
         setState('error')
-        setError(failure.message)
-      })
+        setError((failure as Error).message)
+      }
+    })()
 
     return () => {
       cancelled = true
     }
-  }, [ra, dec, band, fallbackSlug, fallbackBand, attempt])
+  }, [ra, dec, band, fallbackSlug, fallbackBand, attempt, settled])
 
   const sources = useMemo(
     () => (sequence ? sequence.frames.map((frame) => frameUrl(frame)) : []),

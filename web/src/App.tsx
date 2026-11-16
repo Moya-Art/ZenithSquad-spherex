@@ -46,7 +46,11 @@ export default function App() {
     ? { slug: coords.target.slug, band: band || coords.target.band }
     : null
 
-  const dateLoad = useSequence(ra, dec, band || undefined, fallback)
+  // A coordinate cannot be matched to a committed artifact before the target list arrives, so the
+  // date plate waits for that answer instead of firing a request that has no fallback.
+  const targetsSettled = targets.length > 0 || targetsError !== null
+
+  const dateLoad = useSequence(ra, dec, band || undefined, fallback, targetsSettled)
   const cubeLoad = useCube(ra, dec, coords.target?.slug ?? null)
 
   useEffect(() => {

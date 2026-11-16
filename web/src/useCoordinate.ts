@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Target } from './data'
 import { resolveTarget } from './resolveTarget'
 import {
-  parseViewState,
+  canonicalViewState,
   readViewState,
   URL_DECIMALS,
   writeViewState,
@@ -73,16 +73,22 @@ export type CoordinateState = {
 
 export function useCoordinate(targets: Target[]): CoordinateState {
   const [initialSearch] = useState(() => window.location.search)
-  const [initial] = useState(() => parseViewState(initialSearch))
+  const [initial] = useState(() => canonicalViewState(initialSearch))
 
   const raw = useMemo(() => new URLSearchParams(initialSearch), [initialSearch])
   const [position, setPosition] = useState<Position | null>(initial.position)
   const [raInput, setRaInput] = useState(() => raw.get('ra') ?? (initial.position ? asInput(initial.position.ra) : ''))
   const [decInput, setDecInput] = useState(() => raw.get('dec') ?? (initial.position ? asInput(initial.position.dec) : ''))
   const [errors, setErrors] = useState<FieldErrors | null>(() => {
-    if (!initial.invalid) return null
+    if (!initial.repaired) return null
     return validate(raw.get('ra') ?? '', raw.get('dec') ?? '').errors
   })
+
+  // Correct the bar on arrival. This replaces rather than pushes: the visitor did not navigate to
+  // `?ra=999`, so Back must not return to an address the page refuses to show.
+  useEffect(() => {
+    if (initial.url !== null) writeViewState(initial.position, { replace: true })
+  }, [initial])
 
   const apply = useCallback((next: Position) => {
     setPosition(next)
