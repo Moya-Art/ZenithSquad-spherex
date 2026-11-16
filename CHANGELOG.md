@@ -94,6 +94,33 @@ Merged in [#18](https://github.com/Moya-Art/ZenithSquad-spherex/pull/18). Squash
 
 ---
 
+## Phase 8c fix — the plane URLs a coordinate cube handed out — 2026-11-16
+
+Merged in [#24](https://github.com/Moya-Art/ZenithSquad-spherex/pull/24). `APP_VERSION` 0.8.1.
+
+### Fixed
+
+- Every `/cube/plane` and `/cube/composite` request for a cube built from a bare coordinate returned
+  **422**, over a hundred times per page view: the wavelength plate requests all 102 planes at once.
+  `_decorate_cube` passed `manifest["target"]` straight into the query string, and for a coordinate
+  that field holds the display label `ra269.4540_dec4.6934` (written by `pipeline/cube.py:649` from
+  `position.label`). The routes validate `target` as `^[a-z0-9_]+$` — a slug from `/targets` — and a
+  decimal point fails it.
+- The API now emits `target` only when it resolves to a real slug; a coordinate's URLs carry `ra` and
+  `dec`, which identify the cube on their own. `manifest["target"]` is untouched, because that is what
+  the page displays.
+- This also repairs the cubes already in the bucket, whose manifests carry label targets. A pipeline
+  fix would not have: the artifacts were written before it.
+
+### Why it escaped
+
+`/cube/plane` was tested with a committed cube (`target=barnard`, a valid slug) and with no target at
+all. The one case in between, a live cube for a coordinate, was never asserted. There is now a test
+that takes the URLs the decorator emits and puts them through the router: a 404 ("not built yet") is
+fine, a 422 means the API handed out a URL it cannot serve.
+
+---
+
 ## Phase 8c — the bucket: durable cache — 2026-11-16
 
 Merged in [#21](https://github.com/Moya-Art/ZenithSquad-spherex/pull/21). Squash-merged onto `main`.
