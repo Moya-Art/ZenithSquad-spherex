@@ -3,13 +3,15 @@ import { Timeline } from './Timeline'
 import type { Cube, Sequence } from './data'
 
 /**
- * The bottom: a video-editor-looking stack that is read-only.
+ * The bottom: a video-editor-looking pair of tracks that is read-only.
  *
- * Two rulers, not one. Time and wavelength are different axes, and sharing a scale would look tidier
- * and be a lie. The resemblance to an editor is a reading aid — there is no trimming, no dragging
- * and no timeline edit here.
+ * Split left/right to sit under the two plates: dates under the date plate, wavelength under the
+ * wavelength plate. Two rulers, not one — time and wavelength are different axes, and sharing a
+ * scale would look tidier and be a lie. The resemblance to an editor is a reading aid: there is no
+ * trimming, no dragging and no timeline edit here.
  *
- * The band selector lives here, beside the epoch readout, because both describe the date plate.
+ * The band selector lives with the date track, beside the epoch readout, because both describe the
+ * date plate.
  */
 
 const BANDS = ['D1', 'D2', 'D3', 'D4', 'D5', 'D6']
@@ -70,22 +72,33 @@ export function TrackStack({
       </div>
 
       <div className="track-body">
-        {sequence && sequence.frames.length > 0 ? (
-          <Timeline frames={sequence.frames} index={index} onSelect={onSelect} accent="var(--accent)" />
-        ) : (
-          <div className="track-empty">The date track loads with the date plate.</div>
-        )}
+        <div className="track-col track-col--date">
+          {sequence && sequence.frames.length > 0 ? (
+            <Timeline
+              frames={sequence.frames}
+              index={index}
+              onSelect={onSelect}
+              accent="var(--accent)"
+            />
+          ) : (
+            <div className="track-empty">The date track loads with the date plate.</div>
+          )}
+        </div>
 
-        {cube && cube.planes.length > 0 ? (
-          <SpectrumChart
-            planes={cube.planes}
-            points={cube.spectrum?.points ?? []}
-            active={plane}
-            onSelect={onPlane}
-          />
-        ) : (
-          <div className="track-empty">The wavelength track loads with the wavelength plate.</div>
-        )}
+        <div className="track-col track-col--wavelength">
+          {cube && cube.planes.length > 0 ? (
+            <SpectrumChart
+              planes={cube.planes}
+              points={cube.spectrum?.points ?? []}
+              active={plane}
+              onSelect={onPlane}
+            />
+          ) : (
+            <div className="track-empty">
+              The wavelength track loads with the wavelength plate.
+            </div>
+          )}
+        </div>
       </div>
     </section>
   )
