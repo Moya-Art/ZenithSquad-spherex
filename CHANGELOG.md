@@ -23,6 +23,93 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 8a — the other four targets, prebuilt — 2026-11-16
+
+Merged in [#16](https://github.com/Moya-Art/ZenithSquad-spherex/pull/16). Squash-merged onto `main`.
+
+### Added
+
+- `data/fallback/cube/{wise0855,barnard,eps_ind,rw_aur}.*` — 102 planes, one composite and one
+  `cube.json` per target. Until now only `r_dra` had a committed cube, so four of the five targets
+  could not open a spectrum without a 306 MiB download on first view.
+- `data/fallback/sequence/*` for the same four targets, in **two bands each**: the band with the most
+  dates (the one the API picks when a request omits `--band`) and the band `targets.json` names (the
+  one the frontend asks for by default, `App.tsx::effectiveBand`). Without the second one, the
+  frontend's own fallback path misses exactly when it is needed — when the API is not answering.
+
+### Measured
+
+- Cube builds, one tile (320 909 760 B) per target: `wise0855` 91 s, `barnard` 88 s, `eps_ind` 99 s,
+  `rw_aur` 15 s (tile already cached). Rendered output ~740 KB per cube.
+- Sequence builds: `wise0855` D2/D5, `barnard` D3/D6, `eps_ind` D2/D6, `rw_aur` D3/D6.
+- `cache purge --raw --tiles --keep 0`: **1.78 GB freed** (496.7 MB of cutouts, 1.28 GB of tiles),
+  `data/cache` 1.7 GB → 7.3 MB. Nothing was committed from it: the tiles are ingredients.
+
+---
+
+## Phase 8b — the API deployed to Cloud Run — 2026-11-16
+
+Merged in [#17](https://github.com/Moya-Art/ZenithSquad-spherex/pull/17). Squash-merged onto `main`.
+
+This is a **partial** Phase 8: deployment only. The bucket, `jobs/refresh.py`, Cloud Scheduler and
+`POST /refresh` are still open, so `/healthz` still reports `bucket_reachable: null` and the cache
+lives on the instance.
+
+### Added
+
+- `scripts/deploy_api.sh` — build + deploy in one command, image tagged with `git rev-parse --short
+  HEAD` so a revision is traceable to a commit. Cloud Run moves traffic to a new revision only once it
+  is healthy, and the previous revision stays for `update-traffic`.
+- `scripts/cloudbuild.yaml` — four lines, because `gcloud builds submit --tag` only accepts a
+  `Dockerfile` at the context root and this one lives in `api/`.
+- `scripts/api.env.yaml` — the runtime environment, deployed with `--env-vars-file`. `--set-env-vars`
+  cannot express `CORS_ORIGINS`: gcloud splits the value on commas and then parses each piece as its
+  own `KEY=VALUE`, which fails on `https://…`.
+- Cloud Run service `spherex-api` in `us-central1`, project `zenith-squad-2026` (new project, billing
+  linked, APIs enabled), image in Artifact Registry `us-central1-docker.pkg.dev/zenith-squad-2026/api`.
+
+### Changed
+
+- `api/Dockerfile` copies `data/fallback/cube`. Without it the container holds `targets.json` but no
+  committed cubes, and `service.committed_cube` silently finds nothing — every target would fall
+  through to a live build and the Phase 8a work would be invisible in production.
+
+### Decided (each one is a deployment fact, not a preference)
+
+- `--no-cpu-throttling`. The cube builder is a background thread and the request that starts a build
+  returns `202` immediately; with CPU throttling on, the build only advances while a request is being
+  handled and stalls between polls.
+- `--max-instances 1`. The cache is per-instance disk; two instances means two caches, a doubled
+  306 MiB download, and `/queue` answering differently depending on which instance replies.
+- `--min-instances 0`. Always-allocated CPU is billed while an instance exists; with a 0 minimum the
+  instance is created by the first visitor and lives ~15 min after the last request.
+- `--memory 4Gi`, not the build plan's `2Gi`. `/tmp` on Cloud Run is memory-backed, so the 306 MiB
+  tile lives in RAM alongside the `512×512×102` numpy window and its per-plane copies.
+
+### Measured
+
+- `gcloud builds submit`: 1 m 57 s, image 2.8 MiB of source context, no tiles or `node_modules`
+  uploaded (`.gitignore` is used as `.gcloudignore`).
+- `/healthz` → **unreachable** (see Plan changes).
+- `/targets` → five slugs. `/cube?target=wise0855` → `state: ready`, served from the committed
+  artifact, proving the `COPY` above.
+- `/frames?target=wise0855&band=D5`, cold: **37 s**, under the 600 s timeout.
+- CORS preflight from `https://www.zenithsquad.earth` → `200` with
+  `access-control-allow-origin: https://www.zenithsquad.earth`.
+- `pytest` → 141 passed.
+
+### Plan changes
+
+- **`/healthz` cannot be observed on Cloud Run.** The path is intercepted by Google's frontend before
+  the container: it answers an HTML 404 with no `x-cloud-trace-context`, while a genuine FastAPI 404
+  (`/nope`) returns `{"detail":"Not Found"}` with the trace header. Phase 8's "done when `/healthz`
+  reports `bucket_reachable: true`" therefore has to be checked on another path once the bucket lands;
+  the route itself is unchanged and still correct in local development.
+- **Runtime environment moved to `scripts/api.env.yaml`** (§ above).
+- **Phase 8 memory 2Gi → 4Gi** (§ above).
+
+---
+
 ## Phase 7 corrections, backend C — delete the raw downloads — 2026-11-16
 
 Merged in [#15](https://github.com/Moya-Art/ZenithSquad-spherex/pull/15). Squash-merged onto `main`.
