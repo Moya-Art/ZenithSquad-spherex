@@ -119,6 +119,10 @@ The 11 s is the interesting number: the plan estimated ~90 s for a cold cube fro
 measurement, but S3→Cloud Run moves the 306 MiB tile far faster than a home connection does, so a
 cold cube in production is cheap. `/health` now reports `bucket_reachable: true`.
 
+Cold sequence builds in the cloud, one per target, pre-warmed into the bucket so the first visitor
+never pays them: `r_dra` D6 100 s, `barnard` D6 40 s, `eps_ind` D6 103 s, `rw_aur` D6 36 s. All under
+the 600 s request timeout, with `eps_ind` the closest to it.
+
 ### Plan changes
 
 - **Object naming.** `BUILD_PLAN.md` §Phase 8 asks for `previews/ cube/ manifests/ tiles/ cache/`. The
