@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  canonicalViewState,
   DEFAULT_POSITION,
   parseViewState,
   serializeViewState,
@@ -49,6 +50,45 @@ describe('parseViewState', () => {
       position: { ra: 359.99999, dec: 90 },
       invalid: false,
     })
+  })
+})
+
+describe('canonicalViewState', () => {
+  it('fills the bar in when nothing was asked for', () => {
+    expect(canonicalViewState('')).toEqual({
+      position: DEFAULT_POSITION,
+      url: '?ra=248.16775&dec=66.75497',
+      repaired: false,
+    })
+  })
+
+  it('leaves a coordinate the bar already states exactly alone', () => {
+    expect(canonicalViewState('?ra=269.45402&dec=4.69336')).toEqual({
+      position: { ra: 269.45402, dec: 4.69336 },
+      url: null,
+      repaired: false,
+    })
+  })
+
+  it('normalizes precision rather than rewriting a different coordinate', () => {
+    expect(canonicalViewState('?ra=269.4540249&dec=4.6933601')).toEqual({
+      position: { ra: 269.45402, dec: 4.69336 },
+      url: '?ra=269.45402&dec=4.69336',
+      repaired: false,
+    })
+  })
+
+  it('strips a coordinate that was never valid, so a reload cannot inherit it', () => {
+    expect(canonicalViewState('?ra=999&dec=4.69336')).toEqual({
+      position: null,
+      url: '',
+      repaired: true,
+    })
+    expect(canonicalViewState('?ra=10')).toEqual({ position: null, url: '', repaired: true })
+  })
+
+  it('drops the parameters the URL no longer carries', () => {
+    expect(canonicalViewState('?target=barnard&ra=1&dec=2&mode=cube').url).toBe('?ra=1.00000&dec=2.00000')
   })
 })
 

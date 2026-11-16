@@ -23,6 +23,26 @@ Merged in [#N](pull-request-url). Commit `<sha>`.
 
 ---
 
+## Phase 7d — the plate opens on committed frames, and the URL becomes a place — 2026-11-16
+
+Merged in [#20](https://github.com/Moya-Art/ZenithSquad-spherex/pull/20). Squash-merged onto `main`.
+
+### Fixed
+- The date plate asked the API first, so a cold `/frames` held an empty plate for 37 s while the target's frames sat committed in the repository. A named target now opens on `data/fallback/sequence/<slug>_<band>.json` at once, marked `stale`, and the live request replaces it in place if it answers. A coordinate with no committed artifact keeps the live path and its progress notice, which is the distinction the plate now makes visible.
+- The first request could leave without a fallback at all: `useCoordinate` had no target until `/targets` arrived. The plate waits for that answer.
+- **Back did nothing.** `writeViewState` used `replaceState` while `useCoordinate` listened for `popstate` "so Back returns to the previous coordinate" — with `replaceState` no history entry is ever created, so that could never happen. Navigation pushes now; correcting the bar replaces.
+- The address bar could contradict the screen: an empty URL left no coordinate in it, and `?ra=999` survived reloads and shares. `canonicalViewState` fills in the default, normalizes precision, or strips a coordinate that was never valid.
+- `parseViewState` rounds to five decimals before the range check, so `359.999996` is rejected instead of being sent as `360.00000`, and the position the loaders use is the one the link states.
+
+### Added
+- `loadCommittedSequence`, the mirror of `loadCommittedCube`, plus five `canonicalViewState` cases (20 frontend tests total).
+
+### Plan changes
+- §2.4 wrote the loading policy as "live first, committed files as the net". For a named target it is now committed first with the live build replacing it; an arbitrary coordinate is still live first, because it has nothing to fall back on.
+- `/healthz` is `/health` — see Phase 7c.
+
+---
+
 ## Phase 7c — the health route — 2026-11-16
 
 Merged in [#19](https://github.com/Moya-Art/ZenithSquad-spherex/pull/19). Squash-merged onto `main`.

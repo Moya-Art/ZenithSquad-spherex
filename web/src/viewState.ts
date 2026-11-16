@@ -8,6 +8,11 @@
  *
  * An out-of-range coordinate is rejected here, before any request is made: `?ra=999` is a typo, not a
  * patch of sky.
+ *
+ * Moving to a coordinate is a navigation, so it pushes an entry: Back has to return to the patch of
+ * sky you were looking at. Correcting the bar — filling in the default, rounding, throwing away a
+ * coordinate that was never valid — is not a navigation, so it replaces, and Back never lands on an
+ * address the page refused to show.
  */
 
 export type Position = { ra: number; dec: number }
@@ -31,6 +36,11 @@ function parseDegrees(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+/** The precision the cache key rounds to; a coordinate is only ever this specific. */
+function roundDegrees(value: number): number {
+  return Number(value.toFixed(URL_DECIMALS))
+}
+
 export function parseViewState(search: string): ParsedViewState {
   const params = new URLSearchParams(search)
   const rawRa = params.get('ra')
@@ -46,9 +56,17 @@ export function parseViewState(search: string): ParsedViewState {
     return { position: null, invalid: true }
   }
 
-  const ra = parseDegrees(rawRa)
-  const dec = parseDegrees(rawDec)
-  if (ra == null || dec == null || !isValidCoordinate(ra, dec)) {
+  const parsedRa = parseDegrees(rawRa)
+  const parsedDec = parseDegrees(rawDec)
+  if (parsedRa == null || parsedDec == null) {
+    return { position: null, invalid: true }
+  }
+
+  // Rounded before the range check, not after: `359.999996` becomes `360.00000`, which the API
+  // rejects, and it must be rejected here too rather than sent and bounced.
+  const ra = roundDegrees(parsedRa)
+  const dec = roundDegrees(parsedDec)
+  if (!isValidCoordinate(ra, dec)) {
     return { position: null, invalid: true }
   }
 
@@ -66,7 +84,46 @@ export function readViewState(): ParsedViewState {
   return parseViewState(window.location.search)
 }
 
-export function writeViewState(position: Position): void {
-  const next = `${window.location.pathname}${serializeViewState(position)}`
-  window.history.replaceState(null, '', next)
+/**
+ * What the bar should say for a search string, and whether it needs saying at all.
+ *
+ * Three cases, and the address bar is never allowed to claim a different patch of sky than the one
+ * on screen:
+ * - a coordinate was asked for: it is used, and normalized to five decimals;
+ * - nothing was asked for: the default target is used, and the bar is filled in so a copied link
+ *   points at what the visitor is actually looking at;
+ * - the coordinate was unusable: there is no position, and the query is stripped rather than left
+ *   behind as a broken address that survives a reload and a share.
+ */
+export type CanonicalViewState = {
+  position: Position | null
+  /** The query to write — `''` to strip it — or null when the bar already says it. */
+  url: string | null
+  /** The search string that came in was not a usable coordinate. */
+  repaired: boolean
+}
+
+export function canonicalViewState(search: string): CanonicalViewState {
+  const parsed = parseViewState(search)
+
+  if (parsed.invalid) {
+    return { position: null, url: search === '' ? null : '', repaired: true }
+  }
+
+  const url = serializeViewState(parsed.position)
+  return { position: parsed.position, url: url === search ? null : url, repaired: false }
+}
+
+/**
+ * Write the address bar. Pushes by default, because a coordinate is a place; `replace` is for
+ * corrections, where adding a history entry would make Back step onto an address nobody visited.
+ */
+export function writeViewState(
+  position: Position | null,
+  options: { replace?: boolean } = {},
+): void {
+  const query = position ? serializeViewState(position) : ''
+  const next = `${window.location.pathname}${query}`
+  if (options.replace) window.history.replaceState(null, '', next)
+  else window.history.pushState(null, '', next)
 }
