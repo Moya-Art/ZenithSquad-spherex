@@ -1,5 +1,6 @@
 import { BlinkStage } from './BlinkStage'
 import { LoadingNotice } from './LoadingNotice'
+import type { Tint } from './colorAdjust'
 import type { Colormap } from './colormaps'
 import type { Frame, Sequence } from './data'
 import type { SequenceState } from './useSequence'
@@ -29,6 +30,7 @@ type Props = {
   sources: string[]
   labels: string[]
   palette: Colormap
+  tint?: Tint
   band: string
   disabled: boolean
 }
@@ -60,6 +62,7 @@ export function DatePlate({
   sources,
   labels,
   palette,
+  tint,
   band,
   disabled,
 }: Props) {
@@ -73,18 +76,20 @@ export function DatePlate({
       </div>
 
       {disabled && (
-        <div className="plate-state">
-          <div className="plate-state-title">Enter a coordinate</div>
-          <div className="plate-state-body">The patch of sky loads from Right Ascension and Declination.</div>
+        <div className="notice">
+          <div className="notice-title">Enter a coordinate</div>
+          <div className="notice-body">
+            The patch of sky loads from Right Ascension and Declination.
+          </div>
         </div>
       )}
 
       {!disabled && state === 'loading' && <LoadingNotice kind="sequence" targetName={label} />}
 
       {!disabled && state === 'missing' && (
-        <div className="plate-state">
-          <div className="plate-state-title">No data was found</div>
-          <div className="plate-state-body">Try another coordinate.</div>
+        <div className="notice">
+          <div className="notice-title">No data was found</div>
+          <div className="notice-body">Try another coordinate.</div>
         </div>
       )}
 
@@ -114,6 +119,7 @@ export function DatePlate({
               onPlayingChange={setPlaying}
               onReadyChange={setReady}
               palette={palette}
+              tint={tint}
             />
 
             <div className="transport">

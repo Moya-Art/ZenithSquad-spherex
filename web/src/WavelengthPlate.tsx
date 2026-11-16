@@ -1,5 +1,6 @@
 import { CubeView } from './CubeView'
 import { LoadingNotice } from './LoadingNotice'
+import type { Tint } from './colorAdjust'
 import type { PaletteEntry } from './colormaps'
 import type { Cube } from './data'
 
@@ -22,6 +23,7 @@ type Props = {
   plane: number
   setPlane: (index: number) => void
   palette: PaletteEntry
+  tint?: Tint
   disabled: boolean
 }
 
@@ -43,6 +45,7 @@ export function WavelengthPlate({
   plane,
   setPlane,
   palette,
+  tint,
   disabled,
 }: Props) {
   return (
@@ -53,18 +56,18 @@ export function WavelengthPlate({
       </div>
 
       {disabled && (
-        <div className="plate-state">
-          <div className="plate-state-title">Enter a coordinate</div>
-          <div className="plate-state-body">
+        <div className="notice">
+          <div className="notice-title">Enter a coordinate</div>
+          <div className="notice-body">
             The spectrum of a patch of sky loads with its coordinate.
           </div>
         </div>
       )}
 
       {!disabled && !requested && (
-        <div className="plate-state plate-state--decision">
-          <div className="plate-state-title">102 wavelengths of {label}</div>
-          <div className="plate-state-body">
+        <div className="notice">
+          <div className="notice-title">102 wavelengths of {label}</div>
+          <div className="notice-body">
             This patch needs one 306 MB all-sky tile. It is downloaded once, and the raw tile is
             deleted as soon as the planes are rendered.
           </div>
@@ -92,6 +95,7 @@ export function WavelengthPlate({
           plane={plane}
           onPlane={setPlane}
           palette={palette}
+          tint={tint}
           onRetry={retry}
         />
       )}

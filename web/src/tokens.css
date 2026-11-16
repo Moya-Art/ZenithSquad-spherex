@@ -12,9 +12,12 @@
   --text-muted: #8b8a87;
   --text-faint: #5f5e5c;
 
-  --accent: #e0a44a;
-  --accent-dim: rgba(224, 164, 74, 0.16);
-  --accent-line: rgba(224, 164, 74, 0.55);
+  /* Space Apps red, sampled from the competition logo (#DA240B) and lifted just enough to read as
+     small text on the dark canvas. */
+  --accent: #e23c22;
+  --accent-dim: rgba(226, 60, 34, 0.16);
+  --accent-line: rgba(226, 60, 34, 0.55);
+  --accent-strong: rgba(226, 60, 34, 0.3);
 
   --warn: #d98324;
   --bad: #c15f3c;
