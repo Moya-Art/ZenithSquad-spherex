@@ -238,6 +238,7 @@ def live_sequence(
             raw_paths=raw,
         )
         cache.put_manifest(key, manifest)
+        cache.publish_sequence(key)
         _free_raw(raw, key)
         note_irsa_contact()
         return _decorate(manifest, ra, dec, size_deg), "miss"
@@ -272,6 +273,12 @@ def preview_webp(
     path = cache.frame_path(
         sequence_key(ra, dec, manifest["band"], size_deg), frame["file"]
     )
+    try:
+        cache.ensure_local(path)
+    except FileNotFoundError as error:
+        raise UnknownFrame(
+            f"{obs_id} is in the {manifest['band']} sequence but its frame is missing"
+        ) from error
     data = path.read_bytes()
     cache.put_frame(key, data)
     return data, "miss"
@@ -487,6 +494,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
 
     note_irsa_contact()
     cache.put_cube_manifest(key, manifest)
+    cache.publish_cube(key)
     freed = _free_raw(raw, key)
     cache.put_progress(key, {
         "state": "done",
@@ -554,24 +562,45 @@ def enqueue_cube(key: str, position: PositionSpec, size_deg: float, refresh: boo
 QUEUE_STATES = ("queued", "building", "failed")
 
 
+def _queue_keys(cache: Cache) -> list[str]:
+    """Cache keys with a job record: the local directories plus, when configured, the bucket's.
+
+    The bucket half is what keeps a build visible after the instance that started it is gone.
+    """
+    keys: set[str] = set()
+    directory = cache.root / "cubes"
+    if directory.is_dir():
+        keys.update(entry.name for entry in directory.iterdir() if entry.is_dir())
+    if cache.store.enabled:
+        try:
+            for name in cache.store.list_prefix("cubes/"):
+                parts = name.split("/")
+                if len(parts) >= 2 and parts[1]:
+                    keys.add(parts[1])
+        except Exception as error:  # noqa: BLE001 - a status view must not become a 500
+            _log.warning("could not list the bucket for the queue: %s", error)
+    return sorted(keys)
+
+
 def queue_state() -> list[dict]:
     """Every cube build this instance knows about, newest first.
 
-    The job registry is already on disk — one `progress.json` per cache key — so this is a directory
-    walk, not new storage. A finished job is not a queue item (it is a cache hit), a job whose
-    `updated_at` stopped moving is dead and dropped, and a half-written file is skipped rather than
-    turned into a 500.
+    The job registry is already one `progress.json` per cache key, so this is a directory walk, not
+    new storage. With a bucket configured the walk moves to the bucket's listing, so a build started
+    on an instance that has since died is still on the queue; a local `progress.json` is read through
+    the ordinary cache path either way.
+
+    A finished job is not a queue item (it is a cache hit), a job whose `updated_at` stopped moving is
+    dead and dropped, and a half-written file is skipped rather than turned into a 500.
     """
     cache = Cache()
-    directory = cache.root / "cubes"
-    if not directory.is_dir():
+    keys = _queue_keys(cache)
+    if not keys:
         return []
 
     jobs = []
-    for entry in directory.iterdir():
-        if not entry.is_dir():
-            continue
-        progress = cache.progress(entry.name)
+    for key in keys:
+        progress = cache.progress(key)
         if progress is None or progress.get("state") not in QUEUE_STATES:
             continue
         if _age_seconds(progress.get("updated_at")) >= CUBE_STALE_SECONDS:
@@ -580,7 +609,7 @@ def queue_state() -> list[dict]:
         if ra is None or dec is None:
             continue
         jobs.append({
-            "key": entry.name,
+            "key": key,
             "name": progress.get("name") or f"RA {ra:.4f} Dec {dec:+.4f}",
             "ra": ra,
             "dec": dec,
@@ -665,7 +694,7 @@ def cube_plane_webp(
     if entry is None:
         raise CubeNotReady(f"plane {index} is not built yet")
     try:
-        return cache.cube_file(key, entry["file"]).read_bytes(), "hit"
+        return cache.ensure_local(cache.cube_file(key, entry["file"])).read_bytes(), "hit"
     except FileNotFoundError as error:
         raise CubeNotReady(f"plane {index} is not built yet") from error
 
@@ -685,7 +714,9 @@ def cube_composite_webp(
     if manifest is None:
         raise CubeNotReady("the composite is written once every plane exists")
     try:
-        return cache.cube_file(key, manifest["composite"]["file"]).read_bytes(), "hit"
+        return cache.ensure_local(
+            cache.cube_file(key, manifest["composite"]["file"])
+        ).read_bytes(), "hit"
     except FileNotFoundError as error:
         raise CubeNotReady("the composite is not built yet") from error
 
@@ -706,5 +737,5 @@ def health() -> dict:
         "targets": count,
         "targets_state": targets_state,
         "collection": COLLECTION,
-        "bucket_reachable": None,
+        "bucket_reachable": cache.store.ping(),
     }
