@@ -90,6 +90,19 @@ def coordinate_label(ra: float, dec: float) -> str:
     return f"ra{ra:.4f}_dec{dec:.4f}"
 
 
+def position_fields(position: PositionSpec) -> dict:
+    """The bits of a position every progress record carries.
+
+    They live on disk because the cache key is a hash: `/queue` lists jobs by walking
+    `cubes/*/progress.json`, and without these three fields a job could not say what sky it is for.
+    """
+    return {
+        "ra": round(position.ra, 6),
+        "dec": round(position.dec, 6),
+        "name": position.name,
+    }
+
+
 def position_for(ra: float, dec: float, target: str | None) -> PositionSpec:
     """A named target keeps its proper motion; a typed coordinate has none and says so."""
     if target:
@@ -424,6 +437,7 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
             "planes": collected["planes"],
             "points": collected["points"],
             "error": None,
+            **position_fields(position),
         })
 
     try:
@@ -440,13 +454,14 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         )
     except (catalog.ArchiveUnknown, catalog.SchemaError, cube.TileUnavailable) as error:
         note_irsa_contact()
-        _record_failure(cache, key, started, "archive_unreachable", str(error))
+        _record_failure(cache, key, started, "archive_unreachable", str(error), position)
         return
     except ValueError as error:
-        _record_failure(cache, key, started, "cannot_build", str(error))
+        _record_failure(cache, key, started, "cannot_build", str(error), position)
         return
     except Exception as error:  # noqa: BLE001 - reported, not swallowed
-        _record_failure(cache, key, started, "internal", f"{type(error).__name__}: {error}")
+        _record_failure(cache, key, started, "internal", f"{type(error).__name__}: {error}",
+                        position)
         return
 
     note_irsa_contact()
@@ -464,10 +479,12 @@ def _run_cube_job(key: str, position: PositionSpec, size_deg: float, refresh: bo
         "planes": manifest["planes"],
         "points": manifest["spectrum"]["points"],
         "error": None,
+        **position_fields(position),
     })
 
 
-def _record_failure(cache: Cache, key: str, started: float, reason: str, detail: str) -> None:
+def _record_failure(cache: Cache, key: str, started: float, reason: str, detail: str,
+                    position: PositionSpec) -> None:
     cache.put_progress(key, {
         "state": "failed",
         "stage": "failed",
@@ -481,6 +498,7 @@ def _record_failure(cache: Cache, key: str, started: float, reason: str, detail:
         "planes": [],
         "points": [],
         "error": {"reason": reason, "detail": detail, "at": _now()},
+        **position_fields(position),
     })
 
 
@@ -504,9 +522,59 @@ def enqueue_cube(key: str, position: PositionSpec, size_deg: float, refresh: boo
         "planes": [],
         "points": [],
         "error": None,
+        **position_fields(position),
     })
     _ensure_cube_worker()
     _cube_queue.put((key, position, size_deg, refresh))
+
+
+QUEUE_STATES = ("queued", "building", "failed")
+
+
+def queue_state() -> list[dict]:
+    """Every cube build this instance knows about, newest first.
+
+    The job registry is already on disk — one `progress.json` per cache key — so this is a directory
+    walk, not new storage. A finished job is not a queue item (it is a cache hit), a job whose
+    `updated_at` stopped moving is dead and dropped, and a half-written file is skipped rather than
+    turned into a 500.
+    """
+    cache = Cache()
+    directory = cache.root / "cubes"
+    if not directory.is_dir():
+        return []
+
+    jobs = []
+    for entry in directory.iterdir():
+        if not entry.is_dir():
+            continue
+        progress = cache.progress(entry.name)
+        if progress is None or progress.get("state") not in QUEUE_STATES:
+            continue
+        if _age_seconds(progress.get("updated_at")) >= CUBE_STALE_SECONDS:
+            continue
+        ra, dec = progress.get("ra"), progress.get("dec")
+        if ra is None or dec is None:
+            continue
+        jobs.append({
+            "key": entry.name,
+            "name": progress.get("name") or f"RA {ra:.4f} Dec {dec:+.4f}",
+            "ra": ra,
+            "dec": dec,
+            "state": progress.get("state"),
+            "stage": progress.get("stage"),
+            "planes_done": progress.get("planes_done") or 0,
+            "planes_total": progress.get("planes_total"),
+            "bytes_done": progress.get("bytes_done"),
+            "bytes_total": progress.get("bytes_total"),
+            "eta_seconds": progress.get("eta_seconds"),
+            "started_at": progress.get("started_at"),
+            "updated_at": progress.get("updated_at"),
+        })
+
+    # ISO-8601 timestamps with one offset sort as text, which is what makes this a plain sort.
+    jobs.sort(key=lambda job: job.get("updated_at") or "", reverse=True)
+    return jobs
 
 
 def cube_state(
